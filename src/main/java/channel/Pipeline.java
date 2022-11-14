@@ -1,6 +1,7 @@
 package channel;
 
 import channel.operationblocks.OperationBlock;
+import clock.StepClock;
 import packet.AbstractPacket;
 import packet.PacketReleaseStepPair;
 import packet.PacketReleaseStepPairComparator;
@@ -35,8 +36,19 @@ public class Pipeline {
             throw new IllegalStateException("releaseStep has not been set. Ensure operationBlockList includes an " +
                     "operation to set releaseState to a value");
         }
+        System.out.println("packet added to queue");
         pipelineQueue.add(packetPair);
-
     }
-    //public void stepUpdate();
+
+    public void stepUpdate() {
+        if (pipelineQueue.isEmpty()) {
+            return;
+        }
+        while (pipelineQueue.peek().releaseStep <= StepClock.getCurrentStepCount()) {
+            pipelineQueue.poll().packet.sendPacketToDestination();
+            if (pipelineQueue.isEmpty()) {
+                break;
+            }
+        }
+    }
 }
