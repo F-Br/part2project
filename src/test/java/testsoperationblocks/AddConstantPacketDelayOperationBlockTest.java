@@ -21,7 +21,7 @@ class AddConstantPacketDelayOperationBlockTest {
     static PacketReleaseStepPair testPacket4;
 
     @BeforeEach
-    public void setup() {
+    void setTestPackets() {
         BasicDataPacket dummyPacket = new BasicDataPacket("data", new ArrayDeque());
 
         testPacket1 = new PacketReleaseStepPair(dummyPacket, 0L);
