@@ -5,7 +5,11 @@ import packet.PacketReleaseStepPair;
 public class AddConstantPacketDelayOperationBlock extends OperationBlock {
     private long packetDelay;
 
-    public AddConstantPacketDelayOperationBlock(Long packetDelay) {
+    public AddConstantPacketDelayOperationBlock(Long packetDelay) throws IllegalArgumentException {
+        if (packetDelay < 0) {
+            throw new IllegalArgumentException("must provide a natural number for delay");
+        }
+
         this.packetDelay = packetDelay;
     }
     public PacketReleaseStepPair performOperation(PacketReleaseStepPair packetPair) {

@@ -17,6 +17,8 @@ public class Endpoint {
         outputPipeline.insertPacket(outputPacket);
     }
 
+    // TODO: add receive packet
+
     public Queue getInputBufferQueue() {
         return inputBufferQueue;
     }
