@@ -1,4 +1,4 @@
-package testsoperationblocks;
+package testschannel.testsoperationblocks;
 
 import channel.operationblocks.AddConstantPacketDelayOperationBlock;
 import channel.operationblocks.OperationBlock;

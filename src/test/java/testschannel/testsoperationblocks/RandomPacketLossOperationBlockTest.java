@@ -1,4 +1,4 @@
-package testsoperationblocks;
+package testschannel.testsoperationblocks;
 
 import channel.operationblocks.OperationBlock;
 import channel.operationblocks.RandomPacketLossOperationBlock;
