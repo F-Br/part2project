@@ -1,4 +1,4 @@
-package genome;
+package sideinfrastructure.genome;
 
 public class GeneExpressionDetails {
     private Long releaseTime;

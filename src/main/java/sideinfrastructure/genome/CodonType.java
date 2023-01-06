@@ -1,4 +1,4 @@
-package genome;
+package sideinfrastructure.genome;
 
 public enum CodonType {
     BLOCKING_PROMOTER,

@@ -1,4 +1,4 @@
-package genome;
+package sideinfrastructure.genome;
 
 import fraglet.instructions.DataInstruction;
 import fraglet.instructions.Instruction;

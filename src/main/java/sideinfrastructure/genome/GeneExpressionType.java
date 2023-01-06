@@ -1,4 +1,4 @@
-package genome;
+package sideinfrastructure.genome;
 
 public enum GeneExpressionType {
     PROMOTER,

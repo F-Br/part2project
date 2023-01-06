@@ -1,11 +1,9 @@
-package genome;
+package sideinfrastructure.genome;
 
 import clock.StepClock;
 import fraglet.Fraglet;
-import fraglet.instructions.DataInstruction;
 import fraglet.instructions.Instruction;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class Genome {
@@ -29,7 +27,7 @@ public class Genome {
     }
 
 
-    // going to include the expression controller in the genome and not give it a class
+    // going to include the expression controller in the sideinfrastructure.genome and not give it a class
 
     // EC
     // way to select what to produce (master map of all PIDs to PRPairs)
