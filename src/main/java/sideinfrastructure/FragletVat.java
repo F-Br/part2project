@@ -1,4 +1,4 @@
-package vats;
+package sideinfrastructure;
 
 import clock.StepClock;
 import fraglet.Fraglet;
