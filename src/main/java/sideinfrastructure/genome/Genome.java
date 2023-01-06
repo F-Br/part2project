@@ -3,10 +3,14 @@ package sideinfrastructure.genome;
 import clock.StepClock;
 import fraglet.Fraglet;
 import fraglet.instructions.Instruction;
+import sideinfrastructure.SideIdentifier;
 
 import java.util.*;
 
 public class Genome {
+
+    private final SideIdentifier side;
+
     // map CID -> chromosome pointer
     // sorted list of promoter ID
     // map PID -> CID
@@ -19,13 +23,18 @@ public class Genome {
     private int DEFAULT_VAR_VALUE = 0;
 
     // TODO: this is likely temporary and will rethink this when other components built out or moving onto evolutionary operators and systems
-    public Genome(HashMap<Integer, LinkedList<Chromosome>> CIDToChromosomeMap, ArrayList<Integer> sortedPIDList, HashMap<Integer, LinkedList<Integer>> PIDToCIDLocationMap, HashMap<Integer, PromoteRepressPair> chromosomeRegulatoryMap) {
+    public Genome(SideIdentifier side, HashMap<Integer, LinkedList<Chromosome>> CIDToChromosomeMap, ArrayList<Integer> sortedPIDList, HashMap<Integer, LinkedList<Integer>> PIDToCIDLocationMap, HashMap<Integer, PromoteRepressPair> chromosomeRegulatoryMap) {
+        this.side = side;
+
         this.CIDToChromosomeMap = CIDToChromosomeMap;
         this.sortedPIDList = sortedPIDList;
         this.PIDToCIDLocationMap = PIDToCIDLocationMap;
         this.chromosomeRegulatoryMap = chromosomeRegulatoryMap;
     }
 
+    public SideIdentifier getSide() {
+        return side;
+    }
 
     // going to include the expression controller in the sideinfrastructure.genome and not give it a class
 

@@ -13,11 +13,22 @@ public class FragletVat {
     // this will store seperately the match instructions and the "free fraglets"
     // will need to keep track of the heads of all the existing fraglets to do matches quickly
 
+    private final SideIdentifier side;
+
     LinkedList<Fraglet> fragletList = new LinkedList<>();
     LinkedList<Fraglet> matchFragletList = new LinkedList<>();
     HashMap<InstructionTag, Integer> headInstructionPresentMap = new HashMap<>(); // TODO: consider, might have been better using a list pointing to the actual fraglets.
     HashMap<BitSet, Integer> dataHeadInstuctionPresentMap = new HashMap<>(); // TODO: STILL... need to decide details of this, is it going to be a bitset or an integer?
     PriorityQueue<FragletReleasePair> delayedFragletQueue = new PriorityQueue<>();
+
+    public FragletVat(SideIdentifier side) { // TODO: might also need to develop this to work with other datastructures (maybe?)
+        this.side = side;
+    }
+
+    public SideIdentifier getSide() {
+        return side;
+    }
+
     // TODO: may want to be able to do flushes to kill off very old and stagnant fraglets.
 
     public void addFraglet(Fraglet fraglet) {
