@@ -3,11 +3,14 @@ package sideinfrastructure.genome;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Random;
 
 public class GeneExpressionCounter {
     private int totalScore;
     private ArrayList<Integer> sortedPIDList;
     private HashMap<Integer, PromoteRepressPair> geneExpressionPairMap;
+
+    private Random rnd = new Random();
 
     public GeneExpressionCounter(ArrayList<Integer> PIDList) {
         sortedPIDList = PIDList;
@@ -50,6 +53,29 @@ public class GeneExpressionCounter {
         totalScore -= oldScore;
         int newScore = geneExpressionPairMap.get(PID).removeRepressor();
         totalScore += newScore;
+    }
+
+    public Integer weightedRandomSelectionOfPID() { // TODO: check that totalScore is not 0, if so return null (?)
+        if (totalScore == 0) {
+            return null;
+        }
+
+        int cumulativeScoreTarget = rnd.nextInt(totalScore + 1);
+        int currentCumulativeScore = 0;
+        for (int PID : sortedPIDList) {
+            int PIDScore = geneExpressionPairMap.get(PID).getPromoteScore();
+
+            if (PIDScore == 0) {
+                continue;
+            }
+
+            currentCumulativeScore += PIDScore;
+            if (cumulativeScoreTarget <= currentCumulativeScore) {
+                return PID;
+            }
+        }
+
+        throw new IllegalStateException("No PID found, should have reached a valid PID or returned null");
     }
 
 }
