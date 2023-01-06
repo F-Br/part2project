@@ -5,10 +5,21 @@ import fraglet.instructions.Instruction;
 import fraglet.instructions.InstructionTag;
 
 public class Codon {
-    public CodonType codonType;
+    private CodonType codonType;
     private Instruction instruction;
     private Integer PID;
 
+    public CodonType getCodonType() {
+        return codonType;
+    }
+
+    public Instruction getInstruction() {
+        return instruction;
+    }
+
+    public Integer getPID() {
+        return PID;
+    }
 
     public Codon(CodonType codonType) {
         if (codonType == CodonType.VAR) {
