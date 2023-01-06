@@ -28,4 +28,14 @@ public class Fraglet {
             instructionList.removeFirst();
         }
     }
+
+    // TODO: need to think about how to evaluate non head positions which returnValue == true. These should have a limited processing
+    public Instruction peekSecondInstruction() {
+        try {
+             return instructionList.get(1);
+        }
+        catch (IndexOutOfBoundsException e) {
+            return null;
+        }
+    }
 }
