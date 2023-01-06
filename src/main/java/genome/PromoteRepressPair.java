@@ -22,29 +22,37 @@ public class PromoteRepressPair {
         return promoteScore;
     }
 
-    public void addPromoter() {
+    public int addPromoter() {
         promoteCount += 1;
         if (repressCount == 0) {
             recalculatePromoteScore();
         }
+
+        return promoteScore;
     }
 
-    public void removePromoter() {
+    public int removePromoter() {
         promoteCount -= 1;
         if (repressCount == 0) {
             recalculatePromoteScore();
         }
+
+        return promoteScore;
     }
 
-    public void addRepressor() {
+    public int addRepressor() {
         repressCount += 1;
         promoteScore = 0;
+
+        return promoteScore;
     }
 
-    public void removeRepressor() {
+    public int removeRepressor() {
         if (repressCount == 1) {
             recalculatePromoteScore();
         }
         repressCount -= 1;
+
+        return promoteScore;
     }
 }
