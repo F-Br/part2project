@@ -1,13 +1,15 @@
 package sideinfrastructure.genome;
 
-public class GeneExpressionDetails {
-    private Long releaseTime;
-    private GeneExpressionType geneExpressionType;
-    private Integer PID;
-    private Boolean ownVarSupplied;
-    private Integer optionalVarValue;
+import java.util.BitSet;
 
-    public GeneExpressionDetails(Long releaseTime, GeneExpressionType geneExpressionType, Integer PID, Integer optionalVarValue) {
+public class GeneExpressionDetails {
+    private long releaseTime;
+    private GeneExpressionType geneExpressionType;
+    private int PID;
+    private boolean ownVarSupplied;
+    private BitSet optionalVarValue;
+
+    public GeneExpressionDetails(long releaseTime, GeneExpressionType geneExpressionType, int PID, BitSet optionalVarValue) {
         this.releaseTime = releaseTime;
         this.geneExpressionType = geneExpressionType;
         this.PID = PID;
@@ -15,7 +17,7 @@ public class GeneExpressionDetails {
         this.optionalVarValue = optionalVarValue;
     }
 
-    public GeneExpressionDetails(Long releaseTime, GeneExpressionType geneExpressionType, Integer PID) {
+    public GeneExpressionDetails(long releaseTime, GeneExpressionType geneExpressionType, int PID) {
         this.releaseTime = releaseTime;
         this.geneExpressionType = geneExpressionType;
         this.PID = PID;
@@ -23,7 +25,7 @@ public class GeneExpressionDetails {
     }
 
 
-    public Long getReleaseTime() {
+    public long getReleaseTime() {
         return releaseTime;
     }
 
@@ -31,15 +33,15 @@ public class GeneExpressionDetails {
         return geneExpressionType;
     }
 
-    public Integer getPID() {
+    public int getPID() {
         return PID;
     }
 
-    public Boolean getOwnVarSupplied() {
+    public boolean getOwnVarSupplied() {
         return ownVarSupplied;
     }
 
-    public Integer getOptionalVarValue() {
+    public BitSet getOptionalVarValue() {
         return optionalVarValue;
     }
 }
