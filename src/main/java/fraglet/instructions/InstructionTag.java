@@ -5,6 +5,7 @@ public enum InstructionTag {
 
     CRC_T(false, true, false),
     CRC_T_CHECK,
+    ERROR,
     EXTRACT,
     INSERT,
     SUBMIT,
