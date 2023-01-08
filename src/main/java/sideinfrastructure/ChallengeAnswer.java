@@ -20,7 +20,12 @@ public class ChallengeAnswer {
         }
     }
 
-    public void setRow(Integer index, BitSet bitsetAnswer) {
+    public void setRow(long longIndex, BitSet bitsetAnswer) {
+        if (longIndex >= numberOfRows) {
+            return;
+        }
+
+        int index = (int) longIndex;
         int answerSize = bitsetAnswer.size();
         totalAnswer.get(index).clear();
         if (answerSize <= numberOfBitsInRow) {
@@ -30,7 +35,7 @@ public class ChallengeAnswer {
         }
     }
 
-    public BitSet getRow(Integer index) {
+    public BitSet getRow(int index) {
         return totalAnswer.get(index);
     }
 

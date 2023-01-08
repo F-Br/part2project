@@ -22,8 +22,11 @@ public class ChallengeQuestion {
         }
     }
 
-    public BitSet getRow(Integer index) {
-        return totalChallenge.get(index);
+    public BitSet getRow(long index) {
+        if (index >= numberOfRows) {
+            return null;
+        }
+        return totalChallenge.get((int) index);
     }
 
 }
