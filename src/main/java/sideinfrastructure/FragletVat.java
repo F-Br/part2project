@@ -36,7 +36,7 @@ public class FragletVat {
             return;
         }
 
-        fraglet.consumeNOPHeadInstructions();
+        fraglet.consumeNOPHeadInstructions(); // TODO: maybe remove? See note in the method in fraglet. should almost definitely rework/delete
 
         if (fraglet.peekHeadInstruction().getInstructionTag().isMatchInstruction()) {
             matchFragletList.add(fraglet);
@@ -132,7 +132,7 @@ public class FragletVat {
                     }
                 }
             }
-            throw new IllegalStateException("fraglet match apparently found, but the actual fraglet couldn't be located");
+            throw new IllegalStateException("fraglet match apparently found, but the actual fraglet couldn't be located"); // TODO: could be activated if fraglet is "match match" - need to ensure match match doesn't get added on counts
         }
 
         return null;
@@ -160,8 +160,8 @@ public class FragletVat {
     }
 
 
-    public void addToDelayFragletQueue(Fraglet postDelayFraglet, int delay) {
-        delayedFragletQueue.add(new FragletReleasePair(postDelayFraglet, StepClock.getCurrentStepCount() + delay)); // TODO: just double check the implicit int to long casting has worked here.
+    public void addToDelayFragletQueue(Fraglet postDelayFraglet, long delay) {
+        delayedFragletQueue.add(new FragletReleasePair(postDelayFraglet, StepClock.getCurrentStepCount() + delay));
     }
 
 
