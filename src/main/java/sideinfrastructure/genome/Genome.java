@@ -2,6 +2,7 @@ package sideinfrastructure.genome;
 
 import clock.StepClock;
 import fraglet.Fraglet;
+import fraglet.instructions.DataInstruction;
 import fraglet.instructions.Instruction;
 import sideinfrastructure.SideIdentifier;
 
@@ -20,7 +21,7 @@ public class Genome {
     HashMap<Integer, HashSet<Integer>> PIDToChromPIDLocationMap;
     HashMap<Integer, PromoteRepressPair> chromosomeRegulatoryMap;
 
-    private int DEFAULT_VAR_VALUE = 0;
+    private int DEFAULT_VAR_VALUE = 0; // TODO: should this not be a BitSet of zero?
 
     // TODO: this is likely temporary and will rethink this when other components built out or moving onto evolutionary operators and systems
     public Genome(SideIdentifier side, HashMap<Integer, LinkedList<Chromosome>> CIDToChromosomeMap, ArrayList<Integer> sortedPIDList, HashMap<Integer, LinkedList<Integer>> PIDToCIDLocationMap, HashMap<Integer, PromoteRepressPair> chromosomeRegulatoryMap) {
@@ -104,7 +105,7 @@ public class Genome {
         parseGenome(PID, DEFAULT_VAR_VALUE);
     }
 
-    public void parseGenome(Integer PID, Integer VARValue) {
+    public void parseGenome(Integer PID, BitSet VARValue) {
         // find which chromosomes and if they are repressed
         HashSet<Integer> chromPIDToParse = PIDToChromPIDLocationMap.get(PID);
         for (Integer chromPID : chromPIDToParse) {
@@ -137,7 +138,7 @@ public class Genome {
                                 break;
 
                             case CodonType.VAR:
-                                workingFragletContents.addLast(DataInstruction(VARValue)); // TODO: figure out how this should be set as a bitset
+                                workingFragletContents.addLast(new DataInstruction(VARValue));
                                 break;
 
                             case CodonType.CONTINUING_PROMOTER:
