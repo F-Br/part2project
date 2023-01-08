@@ -13,4 +13,8 @@ public class DataInstruction extends Instruction{
         return data;
     }
 
+    public long getLongData() {
+        return data.toLongArray()[0];
+    }
+
 }
