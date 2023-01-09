@@ -62,7 +62,8 @@ public class Genome {
         geneExpressionDetailsQueue.add(geneExpressionDetails);
     }
 
-    public void removeOldGeneExpressionDetails() {
+    public int removeOldGeneExpressionDetails() {
+        int numberPromotersActivated = 0;
         Long currentTime = StepClock.getCurrentStepCount();
         while (geneExpressionDetailsQueue.peek().getReleaseTime() <= currentTime) {
             GeneExpressionDetails oldGeneExpressionDetails = geneExpressionDetailsQueue.poll();
@@ -70,6 +71,7 @@ public class Genome {
             // try and use if now possible
             if (geneExpressionCounter.getPromoteScorePID(oldGeneExpressionDetails.getPID()) > 0) {
                 parseGenome(oldGeneExpressionDetails);
+                numberPromotersActivated += 1;
             }
 
             // Update counter
@@ -89,6 +91,7 @@ public class Genome {
                 break;
             }
         }
+        return numberPromotersActivated;
     }
 
 
@@ -105,7 +108,7 @@ public class Genome {
         parseGenome(PID, DEFAULT_VAR_VALUE);
     }
 
-    public void parseGenome(Integer PID, BitSet VARValue) {
+    public void parseGenome(Integer PID, BitSet VARValue) { // TODO: what if everything is repressed?
         // find which chromosomes and if they are repressed
         HashSet<Integer> chromPIDToParse = PIDToChromPIDLocationMap.get(PID);
         for (Integer chromPID : chromPIDToParse) {
@@ -169,6 +172,10 @@ public class Genome {
             }
         }
 
+    }
+
+    public Integer weightedRandomSelectionOfPID() {
+        return geneExpressionCounter.weightedRandomSelectionOfPID();
     }
 
 
