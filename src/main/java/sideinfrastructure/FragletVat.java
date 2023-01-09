@@ -60,7 +60,8 @@ public class FragletVat {
     //          : add random selection function (must include changing head values) <- can just getFirst after a shuffle
     //          : add a delayFragletList and create functions for dealing with this (may need to modify addFraglet)
 
-    public void resolveMatches() { // TODO: could speed this up using dirty bits/newly added list.
+    public int resolveMatches() { // TODO: could speed this up using dirty bits/newly added list.
+        int numberOfMatches = 0;
         shuffleMatchList();
 
         for (Fraglet matchFraglet : matchFragletList) {
@@ -74,12 +75,14 @@ public class FragletVat {
                 if (matchedFraglet == null) { // if no match found
                     continue;
                 }
-                else {
+                else { // match found
+                    numberOfMatches++;
                     fragletParse(matchFraglet, matchedFraglet);
                     break;
                 }
             }
         }
+        return numberOfMatches;
     }
 
 
@@ -116,8 +119,8 @@ public class FragletVat {
                 for (Fraglet freeFraglet : fragletList) {
                     if (freeFraglet.peekHeadInstruction() instanceof DataInstruction) {
                         if (((DataInstruction) freeFraglet.peekHeadInstruction()).getData() == ((DataInstruction) instructionToMatch).getData()) {
-                            removeFraglet(matchFraglet);
-                            removeFraglet(freeFraglet);
+                            removeSpecificFraglet(matchFraglet);
+                            removeSpecificFraglet(freeFraglet);
                             return freeFraglet;
                         }
                     }
@@ -126,8 +129,8 @@ public class FragletVat {
             else {
                 for (Fraglet freeFraglet : fragletList) {
                     if (freeFraglet.peekHeadInstruction().getInstructionTag() == instructionToMatch.getInstructionTag()) {
-                        removeFraglet(matchFraglet);
-                        removeFraglet(freeFraglet);
+                        removeSpecificFraglet(matchFraglet);
+                        removeSpecificFraglet(freeFraglet);
                         return freeFraglet;
                     }
                 }
@@ -138,7 +141,7 @@ public class FragletVat {
         return null;
     }
 
-    private void removeFraglet(Fraglet fragletToRemove) {
+    private void removeSpecificFraglet(Fraglet fragletToRemove) {
         // need to remove from lists
         // need to remove present head checks
 
@@ -146,7 +149,21 @@ public class FragletVat {
             matchFragletList.remove(fragletToRemove); // TODO: this is quite inneficient as takes O(n)
         }
         else { // if not match instruction
-            fragletList.remove(fragletToRemove); // TODO: this is quite inneficient as takes O(n)
+            // TODO: check if good implementation, gives extra layer of security (returns false if not in the list), but is an extra check whenever removing
+            if (fragletList.remove(fragletToRemove)) { // TODO: this is quite inneficient as takes O(n)
+                processRemovedFraglet(fragletToRemove);
+            }
+            else { // TODO: is this necessary? see earlier todo about checking implementation
+                throw new IllegalArgumentException("fragletToRemove given doesn't exist in the fragletList");
+            }
+        }
+    }
+
+    private void processRemovedFraglet(Fraglet fragletToRemove) {
+        if (fragletToRemove.peekHeadInstruction().getInstructionTag().isMatchInstruction()) { // if match
+            return;
+        }
+        else { // if not match instruction
             InstructionTag headInstructionTag = fragletToRemove.peekHeadInstruction().getInstructionTag();
             int newInstructionCount = headInstructionPresentMap.get(headInstructionTag) - 1;
             headInstructionPresentMap.put(headInstructionTag, newInstructionCount);
@@ -165,19 +182,33 @@ public class FragletVat {
     }
 
 
-    private void processFragletDelayQueue() {
+    public int processFragletDelayQueue() {
         if (delayedFragletQueue.isEmpty()) {
-            return;
+            return 0;
         }
 
         long currentStep = StepClock.getCurrentStepCount();
+        int numberOfFragletsRemovedFromDelayQueue = 0;
 
         while (delayedFragletQueue.peek().getReleaseStep() <= currentStep) {
             fragletParse(delayedFragletQueue.poll().getFraglet());
+            numberOfFragletsRemovedFromDelayQueue++;
             if (delayedFragletQueue.isEmpty()) {
                 break;
             }
         }
+
+        return numberOfFragletsRemovedFromDelayQueue;
+    }
+
+    public Fraglet removeFirstFragletInFragletList() {
+        if (fragletList.isEmpty()) {
+            return null;
+        }
+
+        Fraglet removedFraglet = fragletList.removeFirst();
+        processRemovedFraglet(removedFraglet);
+        return removedFraglet;
     }
 
 
