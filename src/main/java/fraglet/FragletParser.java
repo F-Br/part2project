@@ -33,6 +33,11 @@ public class FragletParser {
     private Genome genome;
     private long PROMOTER_LIFE_TIME = 5L;
     private long REPRESSOR_LIFE_TIME = 5L;
+    private boolean submissionMade = false;
+
+    public boolean hasSubmissionBeenMade() {
+        return submissionMade;
+    }
 
 
     public FragletParser(ChallengeAnswer challengeAnswer, FragletVat fragletVat, Genome genome) {
