@@ -14,6 +14,9 @@ public class DataInstruction extends Instruction{
     }
 
     public long getLongData() {
+        if (data.length() == 0) { // handle empty bitset
+            return 0L;
+        }
         return data.toLongArray()[0];
     }
 
