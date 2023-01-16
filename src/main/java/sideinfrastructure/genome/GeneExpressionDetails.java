@@ -5,22 +5,22 @@ import java.util.BitSet;
 public class GeneExpressionDetails {
     private long releaseTime;
     private GeneExpressionType geneExpressionType;
-    private int PID;
+    private int validPID;
     private boolean ownVarSupplied;
     private BitSet optionalVarValue;
 
-    public GeneExpressionDetails(long releaseTime, GeneExpressionType geneExpressionType, int PID, BitSet optionalVarValue) {
+    public GeneExpressionDetails(long releaseTime, GeneExpressionType geneExpressionType, int validPID, BitSet optionalVarValue) {
         this.releaseTime = releaseTime;
         this.geneExpressionType = geneExpressionType;
-        this.PID = PID;
+        this.validPID = validPID;
         this.ownVarSupplied = true;
         this.optionalVarValue = optionalVarValue;
     }
 
-    public GeneExpressionDetails(long releaseTime, GeneExpressionType geneExpressionType, int PID) {
+    public GeneExpressionDetails(long releaseTime, GeneExpressionType geneExpressionType, int validPID) {
         this.releaseTime = releaseTime;
         this.geneExpressionType = geneExpressionType;
-        this.PID = PID;
+        this.validPID = validPID;
         this.ownVarSupplied = false;
     }
 
@@ -34,7 +34,7 @@ public class GeneExpressionDetails {
     }
 
     public int getPID() {
-        return PID;
+        return validPID;
     }
 
     public boolean getOwnVarSupplied() {
