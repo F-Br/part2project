@@ -25,7 +25,7 @@ public class FragletParser {
     // output side boolean (maybe)
     // question buffer or answer buffer
 
-    private Endpoint endpoint;
+    private Endpoint currentEndpoint;
     private ChallengeAnswer challengeAnswer;
     private ChallengeQuestion challengeQuestion;
     private SideIdentifier side;
@@ -40,18 +40,26 @@ public class FragletParser {
     }
 
 
-    public FragletParser(ChallengeAnswer challengeAnswer, FragletVat fragletVat, Genome genome) {
+    public FragletParser(ChallengeAnswer challengeAnswer, Genome genome, Endpoint currentEndpoint) {
         this.challengeAnswer = challengeAnswer;
         this.side = SideIdentifier.RECEIVER;
-        this.fragletVat = fragletVat;
+        this.fragletVat = genome.fragletVat;
         this.genome = genome;
+        this.currentEndpoint = currentEndpoint;
+        if (currentEndpoint.destinationFragletVat == null) {
+            throw new IllegalStateException("currentEndpoint should have its destination set before being used as arguments");
+        }
     }
 
-    public FragletParser(ChallengeQuestion challengeQuestion, FragletVat fragletVat, Genome genome) {
+    public FragletParser(ChallengeQuestion challengeQuestion, Genome genome, Endpoint currentEndpoint) {
         this.challengeQuestion = challengeQuestion;
         this.side = SideIdentifier.SENDER;
-        this.fragletVat = fragletVat;
+        this.fragletVat = genome.fragletVat;
         this.genome = genome;
+        this.currentEndpoint = currentEndpoint;
+        if (currentEndpoint.destinationFragletVat == null) {
+            throw new IllegalStateException("currentEndpoint should have its destination set before being used as arguments");
+        }
     }
 
     public void parseFraglet(Fraglet fraglet) { // doesnt need to be boolean if makes no sense
@@ -63,10 +71,11 @@ public class FragletParser {
 
             switch_statement:
             switch (fraglet.peekHeadInstruction().getInstructionTag()) {
-                case DATA:
+                case DATA: {
                     break fraglet_parsing_loop;
+                }
 
-                case CRC_T:
+                case CRC_T: {
                     if (fraglet.size() < 3) {
                         break fraglet_parsing_loop;
                     }
@@ -77,8 +86,9 @@ public class FragletParser {
                     fraglet.addFirst(crcResult);
                     fraglet.addFirst(instr);
                     break;
+                }
 
-                case CRC_T_CHECK:
+                case CRC_T_CHECK: {
                     if (fraglet.size() < 4) {
                         break fraglet_parsing_loop;
                     }
@@ -89,19 +99,20 @@ public class FragletParser {
                     fraglet.pollHeadInstruction();
                     Instruction instr = fraglet.pollHeadInstruction();
                     Instruction crcResult = fraglet.pollHeadInstruction();
-                    if (crcTCheckMatch(fraglet, crcResult)) {
+                    if (crcTCheckMatch(fraglet, (DataInstruction) crcResult)) {
                         fraglet.addFirst(instr);
-                    }
-                    else {
+                    } else {
                         fraglet.addFirst(instr);
                         fraglet.addFirst(new Instruction(InstructionTag.NUL));
                     }
                     break;
+                }
 
-                case ERROR:
+                case ERROR: {
                     break fraglet_parsing_loop;
+                }
 
-                case EXTRACT:
+                case EXTRACT: {
                     if (side == SideIdentifier.RECEIVER) {
                         break fraglet_parsing_loop;
                     }
@@ -119,14 +130,14 @@ public class FragletParser {
                     if (data == null) {
                         fraglet.addFirst(new Instruction(InstructionTag.ERROR));
                         break fraglet_parsing_loop;
-                    }
-                    else {
+                    } else {
                         DataInstruction message = new DataInstruction(data);
                         fraglet.addLast(message);
                         break;
                     }
+                }
 
-                case INSERT:
+                case INSERT: {
                     if (side == SideIdentifier.SENDER) { // TODO: consecutive if statements vs multiple conditioned if statement?
                         break fraglet_parsing_loop;
                     }
@@ -146,11 +157,15 @@ public class FragletParser {
 
                     challengeAnswer.setRow(longIndex, data);
                     break;
+                }
 
-                case SUBMIT: // TODO
+                case SUBMIT: {
+                    submissionMade = true;
+                    break fraglet_parsing_loop;
+                }
 
 
-                case DELAY:
+                case DELAY: {
                     if (fraglet.size() < 2) {
                         break fraglet_parsing_loop;
                     }
@@ -162,27 +177,28 @@ public class FragletParser {
                     long delay = ((DataInstruction) fraglet.pollHeadInstruction()).getLongData();
                     fragletVat.addToDelayFragletQueue(fraglet, delay);
                     break fraglet_parsing_loop;
+                }
 
-                case IF_MATCH: // TODO: still a lot to do for this one
+                case IF_MATCH: { // TODO: still a lot to do for this one
                     if (fraglet.size() < 3) { // TODO: how are we going to deal with nops? add custom size to fraglet class maybe?
-                                              //Todo: If so, then we will need to change the instanceof checks as well as they could be pointing to the wrong directions (override get maybe?) What if nop is intentionally instruction tag?
+                        //Todo: If so, then we will need to change the instanceof checks as well as they could be pointing to the wrong directions (override get maybe?) What if nop is intentionally instruction tag?
                         break fraglet_parsing_loop;
                     }
 
                     fraglet.pollHeadInstruction();
                     Instruction matchInstruction = fraglet.pollHeadInstruction();
-                    Fraglet matchedFraglet = fragletVat.findInstructionMatch(matchInstruction); // <- TODO: may need to do some refactoring of findFragletMatch
+                    Fraglet matchedFraglet = fragletVat.processIfMatchRequest(matchInstruction);
                     if (matchedFraglet == null) {
                         fraglet.pollHeadInstruction();
                         break;
-                    }
-                    else {
+                    } else {
                         matchedFraglet.pollHeadInstruction(); // TODO: depends on if already done
                         fraglet.addAll(matchedFraglet);
                         break;
                     }
+                }
 
-                case REMOVE:
+                case REMOVE: {
                     if (fraglet.size() < 3) {
                         break fraglet_parsing_loop;
                     }
@@ -190,9 +206,10 @@ public class FragletParser {
                     fraglet.pollHeadInstruction();
                     fraglet.remove(1);
                     break;
+                }
 
-                case PROMOTE: // TODO: Check it is sorted if a nonsense PID is given, needs to have logic to just reject this/assign it to closest PID (probably this assign)
-                                // TODO: again, need to check about nops and when they are ok and when they are not
+                case PROMOTE: { // TODO: Check it is sorted if a nonsense PID is given, needs to have logic to just reject this/assign it to closest PID (probably this assign)
+                    // TODO: again, need to check about nops and when they are ok and when they are not
                     if (fraglet.size() < 2) {
                         break fraglet_parsing_loop;
                     }
@@ -202,27 +219,27 @@ public class FragletParser {
 
                     fraglet.pollHeadInstruction();
                     long longPID = ((DataInstruction) fraglet.pollHeadInstruction()).getLongData();
+                    int validPID = genome.findClosestPID((int) longPID);
                     Instruction param;
                     try {
                         param = fraglet.get(0);
-                    }
-                    catch (IndexOutOfBoundsException e) { // check instruction present
+                    } catch (IndexOutOfBoundsException e) { // check instruction present
                         // promote
-                        genome.addGeneExpressionDetail(new GeneExpressionDetails(PROMOTER_LIFE_TIME + StepClock.getCurrentStepCount(), GeneExpressionType.PROMOTER, longPID));
+                        genome.addGeneExpressionDetail(new GeneExpressionDetails(PROMOTER_LIFE_TIME + StepClock.getCurrentStepCount(), GeneExpressionType.PROMOTER, validPID));
                         break;
                     }
                     if (!(param instanceof DataInstruction)) { // check if not data instruction
-                        genome.addGeneExpressionDetail(new GeneExpressionDetails(PROMOTER_LIFE_TIME + StepClock.getCurrentStepCount(), GeneExpressionType.PROMOTER, longPID));
+                        genome.addGeneExpressionDetail(new GeneExpressionDetails(PROMOTER_LIFE_TIME + StepClock.getCurrentStepCount(), GeneExpressionType.PROMOTER, validPID));
                         break;
-                    }
-                    else {
-                        genome.addGeneExpressionDetail(new GeneExpressionDetails(PROMOTER_LIFE_TIME + StepClock.getCurrentStepCount(), GeneExpressionType.PROMOTER, longPID, ((DataInstruction) param).getData()));
+                    } else {
+                        genome.addGeneExpressionDetail(new GeneExpressionDetails(PROMOTER_LIFE_TIME + StepClock.getCurrentStepCount(), GeneExpressionType.PROMOTER, validPID, ((DataInstruction) param).getData()));
                         fraglet.pollHeadInstruction();
                         break;
                     }
+                }
 
 
-                case REPRESS:
+                case REPRESS: {
                     if (fraglet.size() < 2) {
                         break fraglet_parsing_loop;
                     }
@@ -232,30 +249,34 @@ public class FragletParser {
 
                     fraglet.pollHeadInstruction();
                     long longPID = ((DataInstruction) fraglet.pollHeadInstruction()).getLongData();
-                    genome.addGeneExpressionDetail(new GeneExpressionDetails(REPRESSOR_LIFE_TIME + StepClock.getCurrentStepCount(), GeneExpressionType.REPRESSOR, longPID));
+                    int validPID = genome.findClosestPID((int) longPID);
+                    genome.addGeneExpressionDetail(new GeneExpressionDetails(REPRESSOR_LIFE_TIME + StepClock.getCurrentStepCount(), GeneExpressionType.REPRESSOR, validPID));
                     break;
+                }
 
 
                 case MATCH: // both matches should have same behaviour (when found within an executing fraglet)
-                case MATCH_P:
+                case MATCH_P: {
                     // TODO: follow same as above
                     if (fraglet.size() < 2) { // starts with a match instruction and has no argument to match with
                         return;
                     }
 
                     break fraglet_parsing_loop;
+                }
 
 
-                case SEND:
+                case SEND: {
                     if (fraglet.size() < 2) { // needs to send something
                         break fraglet_parsing_loop;
                     }
 
                     fraglet.pollHeadInstruction();
-                    endpoint.sendPacket(fraglet); // TODO: need to fix packet problems
+                    currentEndpoint.sendFraglet(fraglet); // TODO: need to fix packet problems
                     break fraglet_parsing_loop; // TODO: may need to check that logic which follows after loop doesn't affect this fraglet
+                }
 
-                case SPLIT:
+                case SPLIT: {
                     fraglet.pollHeadInstruction();
                     LinkedList<Instruction> seq1 = new LinkedList<>();
 
@@ -275,8 +296,7 @@ public class FragletParser {
                             fragletVat.addFraglet(seq2); // star in between, seq 1 added to vat, seq2 continues execution
                             //TODO: ^ maybe want a deep copy of this?
                             break switch_statement; // TODO: want to break out of switch statement but how?
-                        }
-                        else {
+                        } else {
                             seq1.addLast(fraglet.pollHeadInstruction());
                             fraglet.remove(0);
                         }
@@ -287,13 +307,15 @@ public class FragletParser {
                         }
                     }
                     break;
+                }
 
 
-                case STAR:
+                case STAR: {
                     fraglet.pollHeadInstruction();
+                }
 
 
-                case SUM: // TODO: had weird rules with nops which I'd need to figure out... this applies to many instructions which you need to figure out
+                case SUM: { // TODO: had weird rules with nops which I'd need to figure out... this applies to many instructions which you need to figure out
                     if (fraglet.size() < 4) {
                         break fraglet_parsing_loop;
                     }
@@ -309,24 +331,27 @@ public class FragletParser {
                     long valueA = ((DataInstruction) fraglet.pollHeadInstruction()).getLongData();
                     long valueB = ((DataInstruction) fraglet.pollHeadInstruction()).getLongData();
 
-                    DataInstruction sumResult = new DataInstruction(BitSet.valueOf(new long[] {valueA + valueB}));
+                    DataInstruction sumResult = new DataInstruction(BitSet.valueOf(new long[]{valueA + valueB}));
                     fraglet.addFirst(sumResult);
                     fraglet.addFirst(instr);
                     break;
+                }
 
 
-                case NOP:
+                case NOP: {
                     // TODO: check that happy with this... a lot of uncertainty around nop
                     fraglet.pollHeadInstruction();
                     break;
+                }
 
 
-                case NUL:
+                case NUL: {
                     fraglet = new Fraglet(new LinkedList<>());
                     break;
+                }
 
 
-                case FORK:
+                case FORK: {
                     if (fraglet.size() < 3) {
                         break fraglet_parsing_loop;
                     }
@@ -341,6 +366,7 @@ public class FragletParser {
                     fraglet2.addFirst(instrB);
                     fragletVat.addFraglet(fraglet2);
                     break;
+                }
 
 
                 default:
@@ -410,6 +436,27 @@ public class FragletParser {
         }
 
         parseFraglet(matchFraglet);
+    }
+
+    private DataInstruction crcCalculation(Fraglet fraglet) { // TODO: could change this to a sequence of recursive hashfunction calls into the instructions
+        long runningSum = 0;
+        for (Instruction instr : fraglet.getInstructionList()) {
+            if (instr instanceof DataInstruction) {
+                runningSum += ((DataInstruction) instr).getLongData();
+            }
+        }
+
+        return new DataInstruction(BitSet.valueOf(new long[] {runningSum}));
+    }
+
+    private boolean crcTCheckMatch(Fraglet fraglet, DataInstruction crcOldResult) {
+        DataInstruction crcNewResult = crcCalculation(fraglet);
+        if (crcNewResult.getData() == crcOldResult.getData()) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
 }
