@@ -8,15 +8,16 @@ public class ChallengeAnswer {
     private int numberOfRows = 32; // TODO: rather than hardwire this, could have it randomly generated each new challenge and send the result over to receiver side
     private int numberOfBytesInRow = 4;
     private int numberOfBitsInRow = 8 * numberOfBytesInRow;
-    private ArrayList<BitSet> totalAnswer = new ArrayList<>(numberOfRows);
+    private ArrayList<BitSet> totalAnswer;
 
     public ChallengeAnswer() {
         resetChallengeAnswer();
     }
 
     public void resetChallengeAnswer() {
+        totalAnswer = new ArrayList<>(numberOfRows);
         for (int i = 0; i < numberOfRows; i++) {
-            totalAnswer.set(i, new BitSet(numberOfBytesInRow));
+            totalAnswer.add(new BitSet(numberOfBytesInRow));
         }
     }
 
