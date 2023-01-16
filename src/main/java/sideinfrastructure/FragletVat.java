@@ -2,6 +2,7 @@ package sideinfrastructure;
 
 import clock.StepClock;
 import fraglet.Fraglet;
+import fraglet.FragletParser;
 import fraglet.FragletReleasePair;
 import fraglet.instructions.DataInstruction;
 import fraglet.instructions.Instruction;
@@ -21,8 +22,14 @@ public class FragletVat {
     HashMap<BitSet, Integer> dataHeadInstuctionPresentMap = new HashMap<>(); // TODO: STILL... need to decide details of this, is it going to be a bitset or an integer?
     PriorityQueue<FragletReleasePair> delayedFragletQueue = new PriorityQueue<>();
 
+    private FragletParser fragletParser;
+
     public FragletVat(SideIdentifier side) { // TODO: might also need to develop this to work with other datastructures (maybe?)
         this.side = side;
+    }
+
+    public void setFragletParser(FragletParser fragletParser) {
+        this.fragletParser = fragletParser;
     }
 
     public SideIdentifier getSide() {
@@ -42,11 +49,11 @@ public class FragletVat {
             matchFragletList.add(fraglet);
         }
         else {
-            int newCount = headInstructionPresentMap.get(fraglet.peekHeadInstruction().getInstructionTag()) + 1;
+            int newCount = headInstructionPresentMap.getOrDefault(fraglet.peekHeadInstruction().getInstructionTag(), 0) + 1;
             headInstructionPresentMap.put(fraglet.peekHeadInstruction().getInstructionTag(), newCount);
             if (fraglet.peekHeadInstruction() instanceof DataInstruction) {
                 BitSet data = ((DataInstruction) fraglet.peekHeadInstruction()).getData();
-                int newDataCount = dataHeadInstuctionPresentMap.get(data) + 1;
+                int newDataCount = dataHeadInstuctionPresentMap.getOrDefault(data, 0) + 1;
                 dataHeadInstuctionPresentMap.put(data, newDataCount);
             }
             fragletList.add(fraglet);
@@ -77,7 +84,7 @@ public class FragletVat {
                 }
                 else { // match found
                     numberOfMatches++;
-                    fragletParse(matchFraglet, matchedFraglet);
+                    fragletParser.parseFragletMatch(matchFraglet, matchedFraglet);
                     break;
                 }
             }
@@ -88,10 +95,10 @@ public class FragletVat {
 
     private boolean fragletMatchFound(Instruction matchInstruction) {
         // check head tag match
-        if (headInstructionPresentMap.get(matchInstruction.getInstructionTag()) > 0) {
+        if (headInstructionPresentMap.getOrDefault(matchInstruction.getInstructionTag(), 0) > 0) {
             // if DATA, then check if match
             if (matchInstruction instanceof DataInstruction) {
-                if (dataHeadInstuctionPresentMap.get(((DataInstruction) matchInstruction).getData()) > 0) {
+                if (dataHeadInstuctionPresentMap.getOrDefault(((DataInstruction) matchInstruction).getData(), 0) > 0) {
                     return true;
                 }
                 else {
@@ -141,6 +148,33 @@ public class FragletVat {
         return null;
     }
 
+
+    public Fraglet processIfMatchRequest(Instruction instructionToMatch) {
+        if (fragletMatchFound(instructionToMatch)) {
+            if (instructionToMatch instanceof DataInstruction) {
+                for (Fraglet freeFraglet : fragletList) {
+                    if (freeFraglet.peekHeadInstruction() instanceof DataInstruction) {
+                        if (((DataInstruction) freeFraglet.peekHeadInstruction()).getData() == ((DataInstruction) instructionToMatch).getData()) {
+                            removeSpecificFraglet(freeFraglet);
+                            return freeFraglet;
+                        }
+                    }
+                }
+            }
+            else {
+                for (Fraglet freeFraglet : fragletList) {
+                    if (freeFraglet.peekHeadInstruction().getInstructionTag() == instructionToMatch.getInstructionTag()) {
+                        removeSpecificFraglet(freeFraglet);
+                        return freeFraglet;
+                    }
+                }
+            }
+            throw new IllegalStateException("fraglet match apparently found, but the actual fraglet couldn't be located"); // TODO: could be activated if fraglet is "match match" - need to ensure match match doesn't get added on counts
+        }
+        return null;
+    }
+
+
     private void removeSpecificFraglet(Fraglet fragletToRemove) {
         // need to remove from lists
         // need to remove present head checks
@@ -165,12 +199,12 @@ public class FragletVat {
         }
         else { // if not match instruction
             InstructionTag headInstructionTag = fragletToRemove.peekHeadInstruction().getInstructionTag();
-            int newInstructionCount = headInstructionPresentMap.get(headInstructionTag) - 1;
+            int newInstructionCount = headInstructionPresentMap.getOrDefault(headInstructionTag, 0) - 1;
             headInstructionPresentMap.put(headInstructionTag, newInstructionCount);
 
             if (headInstructionTag == InstructionTag.DATA) {
                 BitSet data = ((DataInstruction) fragletToRemove.peekHeadInstruction()).getData(); // TODO: check correct data type
-                int newDataCount = dataHeadInstuctionPresentMap.get(data) - 1;
+                int newDataCount = dataHeadInstuctionPresentMap.getOrDefault(data, 0) - 1;
                 dataHeadInstuctionPresentMap.put(data, newDataCount);
             }
         }
@@ -191,7 +225,7 @@ public class FragletVat {
         int numberOfFragletsRemovedFromDelayQueue = 0;
 
         while (delayedFragletQueue.peek().getReleaseStep() <= currentStep) {
-            fragletParse(delayedFragletQueue.poll().getFraglet());
+            fragletParser.parseFraglet(delayedFragletQueue.poll().getFraglet());
             numberOfFragletsRemovedFromDelayQueue++;
             if (delayedFragletQueue.isEmpty()) {
                 break;
