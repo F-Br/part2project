@@ -1,5 +1,7 @@
 package controllers;
 
+import channel.Endpoint;
+import fraglet.Fraglet;
 import fraglet.FragletParser;
 import sideinfrastructure.ChallengeAnswer;
 import sideinfrastructure.ChallengeQuestion;
@@ -23,27 +25,35 @@ public class SideController {
     private ChallengeQuestion challengeQuestion;
 
     // constructor
-    public SideController(SideIdentifier side, Genome genome) {
+    public SideController(SideIdentifier side, Genome genome, Endpoint currentEndpoint) {
         if (genome.getSide() != side) {
             throw new IllegalArgumentException("genome must have same side as side identifier supplied. Genome side: " + genome.getSide().name() + ", side identifier given: " + side.name());
         }
 
         this.genome = genome;
         this.side = side;
-        this.fragletVat = new FragletVat(side);
+        this.fragletVat = genome.fragletVat;
+
+        if ((genome.getSide() != side) || (currentEndpoint.getSide() != side)) {
+            throw new IllegalStateException("The sides of the supplied genome, the current endpoint, and this controller are not the same");
+        }
 
         switch (side) {
             case SENDER:
+                challengeQuestion = new ChallengeQuestion();
                 challengeQuestion.createNewChallengeQuestion();
-                fragletParser = new FragletParser(challengeQuestion, fragletVat, genome);
+                fragletParser = new FragletParser(challengeQuestion, genome, currentEndpoint);
                 break;
             case RECEIVER:
+                challengeAnswer = new ChallengeAnswer();
                 challengeAnswer.resetChallengeAnswer();
-                fragletParser = new FragletParser(challengeAnswer, fragletVat, genome);
+                fragletParser = new FragletParser(challengeAnswer, genome, currentEndpoint);
                 break;
             default:
                 throw new IllegalArgumentException("side enum not recognised as SENDER or RECEIVER, was given as: " + side.name());
         }
+
+        fragletVat.setFragletParser(fragletParser);
     }
 
     public boolean simulateSideCheck() { // returns true if submitted
@@ -73,7 +83,7 @@ public class SideController {
 
         // fraglet matches resolve
         int maxNumberOfFragletsToParse = NUMBER_FRAGLETS_PARSED_PER_STEP;
-        maxNumberOfFragletsToParse -= fragletVat.resolveMatches();;
+        maxNumberOfFragletsToParse -= fragletVat.resolveMatches();
 
         // fraglet delay queue resolve
         if (maxNumberOfFragletsToParse > 0) {
@@ -84,8 +94,14 @@ public class SideController {
         if (maxNumberOfFragletsToParse > 0) {
             fragletVat.shuffleFragletList();
             while (maxNumberOfFragletsToParse > 0) {
-                fragletParser.parseFraglet(fragletVat.removeFirstFragletInFragletList());
-                maxNumberOfFragletsToParse--;
+                Fraglet chosenFraglet = fragletVat.removeFirstFragletInFragletList();
+                if (chosenFraglet != null) {
+                    fragletParser.parseFraglet(chosenFraglet);
+                    maxNumberOfFragletsToParse--;
+                }
+                else {
+                    break;
+                }
             }
         }
 
