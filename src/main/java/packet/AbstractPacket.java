@@ -1,15 +1,19 @@
 package packet;
 
-import java.util.Queue;
+import fraglet.Fraglet;
+import sideinfrastructure.FragletVat;
 
-public abstract class AbstractPacket {
-    final private Queue destinationBufferQueue;
 
-    public AbstractPacket(Queue destinationBufferQueue) {
-        this.destinationBufferQueue = destinationBufferQueue;
+public class AbstractPacket {
+    private FragletVat destinationVat;
+    private Fraglet fraglet;
+
+    public AbstractPacket(Fraglet fraglet, FragletVat destinationVat) {
+        this.destinationVat = destinationVat;
+        this.fraglet = fraglet;
     }
 
     public void sendPacketToDestination() {
-        destinationBufferQueue.add(this);
+        destinationVat.addFraglet(fraglet);
     }
 }
