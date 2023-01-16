@@ -4,6 +4,7 @@ import clock.StepClock;
 import fraglet.Fraglet;
 import fraglet.instructions.DataInstruction;
 import fraglet.instructions.Instruction;
+import sideinfrastructure.FragletVat;
 import sideinfrastructure.SideIdentifier;
 
 import java.util.*;
@@ -16,21 +17,55 @@ public class Genome {
     // sorted list of promoter ID
     // map PID -> CID
     // map CID -> (#prom, #repr)
-    HashMap<Integer, Chromosome> chromPIDToChromosomeMap;
-    ArrayList<Integer> sortedPIDList;
-    HashMap<Integer, HashSet<Integer>> PIDToChromPIDLocationMap;
-    HashMap<Integer, PromoteRepressPair> chromosomeRegulatoryMap;
+    HashMap<Integer, HashSet<Chromosome>> chromPIDToChromosomeMap = new HashMap<>(); // TODO: data structure of this should probably be hashset
+    ArrayList<Integer> sortedPIDList = new ArrayList<>();
+    ArrayList<Integer> sortedChromPIDList = new ArrayList<>();
+    HashMap<Integer, HashSet<Integer>> PIDToChromPIDLocationMap = new HashMap<>();
+    public FragletVat fragletVat;
 
-    private int DEFAULT_VAR_VALUE = 0; // TODO: should this not be a BitSet of zero?
+    private BitSet DEFAULT_VAR_VALUE = BitSet.valueOf(new long[] {0});
 
-    // TODO: this is likely temporary and will rethink this when other components built out or moving onto evolutionary operators and systems
-    public Genome(SideIdentifier side, HashMap<Integer, LinkedList<Chromosome>> CIDToChromosomeMap, ArrayList<Integer> sortedPIDList, HashMap<Integer, LinkedList<Integer>> PIDToCIDLocationMap, HashMap<Integer, PromoteRepressPair> chromosomeRegulatoryMap) {
+
+    Queue<GeneExpressionDetails> geneExpressionDetailsQueue = new LinkedList<>();
+    GeneExpressionCounter geneExpressionCounter;
+
+    // new public constructor
+    public Genome(SideIdentifier side, ArrayList<Chromosome> chromosomes) {
         this.side = side;
+        this.fragletVat = new FragletVat(side);
 
-        this.CIDToChromosomeMap = CIDToChromosomeMap;
-        this.sortedPIDList = sortedPIDList;
-        this.PIDToCIDLocationMap = PIDToCIDLocationMap;
-        this.chromosomeRegulatoryMap = chromosomeRegulatoryMap;
+        for (Chromosome chromosome : chromosomes) {
+            int chromPID = chromosome.getChromPID();
+
+            // add map from chromPID to set of references to chromosomes
+            HashSet<Chromosome> currentChromosomes = chromPIDToChromosomeMap.get(chromPID);
+            if (currentChromosomes == null) {
+                currentChromosomes = new HashSet<>();
+            }
+            currentChromosomes.add(chromosome);
+            chromPIDToChromosomeMap.put(chromPID, currentChromosomes);
+
+            // add all PIDs to list
+            ArrayList<Integer> PIDsInChromosome = chromosome.getSortedPIDList();
+            sortedChromPIDList.add(chromPID);
+            sortedPIDList.addAll(PIDsInChromosome);
+
+            // add all chromosome PIDs to PIDToChromPIDLocationMap
+            for (int PID : PIDsInChromosome) {
+                HashSet<Integer> setChromPIDs = PIDToChromPIDLocationMap.get(PID);
+                if (setChromPIDs == null) {
+                    setChromPIDs = new HashSet<>();
+                }
+                setChromPIDs.add(chromPID);
+                PIDToChromPIDLocationMap.put(PID, setChromPIDs);
+            }
+
+            geneExpressionCounter = new GeneExpressionCounter(sortedPIDList, sortedChromPIDList);
+
+        }
+
+        sortedPIDList.sort(Comparator.naturalOrder());
+
     }
 
     public SideIdentifier getSide() {
@@ -44,8 +79,7 @@ public class Genome {
     // map of all PIDs to counts (might want to create a new class here which updates the count when PRPair updates its own values.
     // queue of promoters and repressors still present in area
 
-    Queue<GeneExpressionDetails> geneExpressionDetailsQueue = new LinkedList<>();
-    GeneExpressionCounter geneExpressionCounter = new GeneExpressionCounter(sortedPIDList);
+
 
     public void addGeneExpressionDetail(GeneExpressionDetails geneExpressionDetails) {
         switch (geneExpressionDetails.getGeneExpressionType()) {
@@ -63,6 +97,9 @@ public class Genome {
     }
 
     public int removeOldGeneExpressionDetails() {
+        if (geneExpressionDetailsQueue.isEmpty()) {
+            return 0;
+        }
         int numberPromotersActivated = 0;
         Long currentTime = StepClock.getCurrentStepCount();
         while (geneExpressionDetailsQueue.peek().getReleaseTime() <= currentTime) {
@@ -117,58 +154,71 @@ public class Genome {
             }
         }
 
-        // for those which arent, find which indexes correspond to the PID
+        // go through each chromsome which shares the chromPID
         for (Integer chromPID : chromPIDToParse) {
-            Chromosome currentChromosome = chromPIDToChromosomeMap.get(chromPID);
-            HashSet<Integer> indexesToSynthesiseFrom = currentChromosome.PIDToIndexMap.get(PID);
-            ArrayList<Codon> codonList = currentChromosome.codonList;
-
-            // for each index synthesise from the codon list from that index
-            for (Integer index : indexesToSynthesiseFrom) {
-
-                Codon currentCodon = codonList.get(index);
-                LinkedList<Instruction> workingFragletContents = new LinkedList<>();
-
-                if (geneExpressionCounter.getPromoteScorePID(currentCodon.getPID()) != 0) {
-                    index++;
-                    currentCodon = codonList.get(index);
-
-                    codon_parsing_loop:
-                    while (currentCodon.getCodonType() != CodonType.BLOCKING_PROMOTER) {
-                        switch (currentCodon.getCodonType()) {
-                            case CodonType.INSTRUCTION:
-                                workingFragletContents.addLast(currentCodon.getInstruction());
-                                break;
-
-                            case CodonType.VAR:
-                                workingFragletContents.addLast(new DataInstruction(VARValue));
-                                break;
-
-                            case CodonType.CONTINUING_PROMOTER:
-                                if (!workingFragletContents.isEmpty()) {
-                                    vat.addFraglet(new Fraglet(workingFragletContents)); // TODO: add vat class and function
-                                }
-                                workingFragletContents = new LinkedList<>();
-
-                                if (geneExpressionCounter.getPromoteScorePID(currentCodon.getPID()) == 0) {
-                                    break codon_parsing_loop;
-                                }
-                                break;
-
-                            default:
-                                throw new IllegalStateException("This codon has not been accounted for when parsing (" + currentCodon.getCodonType().name() + ")");
-                        }
-
-
-                        index++;
-                        if (index >= codonList.size()) {
-                            break codon_parsing_loop;
-                        }
-                        currentCodon = codonList.get(index);
-                    }
+            HashSet<Chromosome> setChromosomes = chromPIDToChromosomeMap.get(chromPID);
+            for (Chromosome currentChromosome : setChromosomes) {
+                // for those which arent, find which indexes correspond to the PID
+                HashSet<Integer> indexesToSynthesiseFrom = currentChromosome.PIDToIndexMap.get(PID);
+                // if this chromsome doesnt have the PID, then continue to next
+                if (indexesToSynthesiseFrom == null) {
+                    continue;
                 }
 
+                ArrayList<Codon> codonList = currentChromosome.codonList;
 
+                // for each index synthesise from the codon list from that index
+                for (Integer index : indexesToSynthesiseFrom) {
+
+                    Codon currentCodon = codonList.get(index);
+                    LinkedList<Instruction> workingFragletContents = new LinkedList<>();
+
+                    if (geneExpressionCounter.getPromoteScorePID(currentCodon.getPID()) != 0) {
+                        index++;
+                        currentCodon = codonList.get(index);
+
+                        codon_parsing_loop:
+                        while (index < codonList.size()) {
+
+                            currentCodon = codonList.get(index);
+
+                            switch (currentCodon.getCodonType()) {
+                                case INSTRUCTION:
+                                    workingFragletContents.addLast(currentCodon.getInstruction());
+                                    break;
+
+                                case VAR:
+                                    workingFragletContents.addLast(new DataInstruction(VARValue));
+                                    break;
+
+                                case CONTINUING_PROMOTER:
+                                    if (!workingFragletContents.isEmpty()) {
+                                        fragletVat.addFraglet(new Fraglet(workingFragletContents)); // TODO: add vat class and function
+                                    }
+                                    workingFragletContents = new LinkedList<>();
+
+                                    if (geneExpressionCounter.getPromoteScorePID(currentCodon.getPID()) == 0) {
+                                        break codon_parsing_loop;
+                                    }
+                                    break;
+
+                                case BLOCKING_PROMOTER:
+                                    if (!workingFragletContents.isEmpty()) {
+                                        fragletVat.addFraglet(new Fraglet(workingFragletContents)); // TODO: add vat class and function
+                                    }
+                                    break codon_parsing_loop;
+
+                                default:
+                                    throw new IllegalStateException("This codon has not been accounted for when parsing (" + currentCodon.getCodonType().name() + ")");
+                            }
+
+
+                            index++;
+                        }
+                    }
+
+
+                }
             }
         }
 
@@ -178,7 +228,9 @@ public class Genome {
         return geneExpressionCounter.weightedRandomSelectionOfPID();
     }
 
-
+    public int findClosestPID(int attemptedPID) {
+        return geneExpressionCounter.findClosestPID(attemptedPID);
+    }
 
 
 
