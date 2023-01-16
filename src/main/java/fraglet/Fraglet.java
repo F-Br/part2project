@@ -3,12 +3,17 @@ package fraglet;
 import fraglet.instructions.Instruction;
 
 import java.util.LinkedList;
+import java.util.Objects;
 
 public class Fraglet {
     private LinkedList<Instruction> instructionList;
 
     public Fraglet(LinkedList<Instruction> instructionList) { // TODO: overload this to accept a fraglet
         this.instructionList = instructionList;
+    }
+
+    public Fraglet(Fraglet fraglet) {
+        this.instructionList = new LinkedList<>(fraglet.getInstructionList()); // TODO: might not be ok, need a deep copy
     }
 
     public LinkedList<Instruction> getInstructionList() {
@@ -61,6 +66,12 @@ public class Fraglet {
 
     public void addAll(LinkedList<Instruction> seq) { // TODO: overload this to accept a fraglet
         instructionList.addAll(seq);
+    }
+
+    public void addAll(Fraglet fraglet) {
+        for (Instruction instruction : fraglet.getInstructionList()) { // TODO: deep copy?
+            addLast(instruction);
+        }
     }
 
     public void addLast(Instruction instruction) {
