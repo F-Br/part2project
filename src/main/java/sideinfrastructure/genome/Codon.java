@@ -43,7 +43,7 @@ public class Codon {
     public Codon(CodonType codonType, Instruction instruction) {
         if (codonType == CodonType.INSTRUCTION) {
             if (instruction.getInstructionTag() == InstructionTag.DATA) {
-                if !(instruction instanceof DataInstruction) {
+                if (!(instruction instanceof DataInstruction)) {
                     throw new IllegalArgumentException("Data instruction must be constructed from DataInstruction class");
                 }
             }
