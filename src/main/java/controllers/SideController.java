@@ -7,11 +7,17 @@ import sideinfrastructure.ChallengeAnswer;
 import sideinfrastructure.ChallengeQuestion;
 import sideinfrastructure.FragletVat;
 import sideinfrastructure.SideIdentifier;
+import sideinfrastructure.genome.Chromosome;
 import sideinfrastructure.genome.Genome;
+
+import java.util.HashSet;
 
 public class SideController {
     // will handle genome, vat, parser, side identifier
     // will initialise it all as empty
+
+    private final int senderChromosomeStartingChromPID = 1000;
+    private final int receiverChromosomeStartingChromPID = 1100;
 
     private final int NUMBER_GENES_PROMOTED_PER_STEP = 1;
     private final int NUMBER_FRAGLETS_PARSED_PER_STEP = 2;
@@ -54,7 +60,39 @@ public class SideController {
         }
 
         fragletVat.setFragletParser(fragletParser);
+
+        // initial setup and parse
+        // determine promoter to promote
+
+        // check starting chromosomes are both valid PIDs
+        if ((genome.findClosestPID(senderChromosomeStartingChromPID) != senderChromosomeStartingChromPID) || (genome.findClosestPID(receiverChromosomeStartingChromPID) != receiverChromosomeStartingChromPID)) {
+            throw new IllegalStateException("There must exist chromosomes with chromPID of " + senderChromosomeStartingChromPID + " and " + receiverChromosomeStartingChromPID);
+        }
+
+        // check starting chromosomes are both valid chromosome PIDs
+        assert (genome.getSortedChromPIDList().contains(senderChromosomeStartingChromPID));
+        assert (genome.getSortedChromPIDList().contains(receiverChromosomeStartingChromPID));
+
+        if (side == SideIdentifier.SENDER) {
+            HashSet<Chromosome> chromosomes = genome.getChromosomesFromChromPID(senderChromosomeStartingChromPID);
+            for (Chromosome chromosome : chromosomes) {
+                genome.forceInitialParseGenome(chromosome, chromosome.getDelegatePID());
+            }
+        }
+        else {
+            HashSet<Chromosome> chromosomes = genome.getChromosomesFromChromPID(receiverChromosomeStartingChromPID);
+            for (Chromosome chromosome : chromosomes) {
+                genome.forceInitialParseGenome(chromosome, chromosome.getDelegatePID());
+            }
+        }
+
+        // parse fraglet vat
+        Fraglet chosenFraglet = fragletVat.removeFirstFragletInFragletList();
+        fragletParser.parseFraglet(chosenFraglet);
+
     }
+
+
 
     public boolean simulateSideCheck() { // returns true if submitted
 
