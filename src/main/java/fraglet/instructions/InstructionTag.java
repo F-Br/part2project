@@ -14,6 +14,7 @@ public enum InstructionTag {
     REMOVE, // maybe returns value?
     PROMOTE,
     REPRESS,
+    PERMANENT_REPRESS,
 
     MATCH(false, false, true),
     MATCH_P(false, false, true),
