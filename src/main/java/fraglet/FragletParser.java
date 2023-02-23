@@ -64,6 +64,9 @@ public class FragletParser {
 
     public void parseFraglet(Fraglet fraglet) { // doesnt need to be boolean if makes no sense
         // pre parse checks if necessary
+        if (fraglet == null) {
+            return;
+        }
 
         // fraglet parsing loop
         fraglet_parsing_loop:
@@ -251,6 +254,21 @@ public class FragletParser {
                     long longPID = ((DataInstruction) fraglet.pollHeadInstruction()).getLongData();
                     int validPID = genome.findClosestPID((int) longPID);
                     genome.addGeneExpressionDetail(new GeneExpressionDetails(REPRESSOR_LIFE_TIME + StepClock.getCurrentStepCount(), GeneExpressionType.REPRESSOR, validPID));
+                    break;
+                }
+
+                case PERMANENT_REPRESS: {
+                    if (fraglet.size() < 2) {
+                        break fraglet_parsing_loop;
+                    }
+                    if (!(fraglet.get(1) instanceof DataInstruction)) {
+                        break fraglet_parsing_loop;
+                    }
+
+                    fraglet.pollHeadInstruction();
+                    long longPID = ((DataInstruction) fraglet.pollHeadInstruction()).getLongData();
+                    int validPID = genome.findClosestPID((int) longPID);
+                    genome.addRepressor(validPID);
                     break;
                 }
 
