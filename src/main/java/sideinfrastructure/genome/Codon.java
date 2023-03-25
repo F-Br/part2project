@@ -54,4 +54,18 @@ public class Codon {
             throw new IllegalArgumentException("Codon constructor with codonType and instruction arguments may only be CodonType.INSTRUCTION, but was instead given " + codonType.name());
         }
     }
+
+    @Override
+    public String toString() {
+        if (codonType == CodonType.BLOCKING_PROMOTER || codonType == CodonType.CONTINUING_PROMOTER) {
+            return codonType.name() + "-" + PID;
+        }
+        if (codonType == CodonType.VAR) {
+            return codonType.name();
+        }
+        if (codonType == CodonType.INSTRUCTION) {
+            return instruction.toString();
+        }
+        throw new IllegalStateException(codonType.name() + " is not recognised in toString() function within Codon class");
+    }
 }
