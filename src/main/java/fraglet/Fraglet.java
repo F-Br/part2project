@@ -77,4 +77,11 @@ public class Fraglet {
     public void addLast(Instruction instruction) {
         instructionList.addLast(instruction);
     }
+
+    @Override
+    public String toString() {
+        return "Fraglet{" +
+                "instructionList=" + instructionList +
+                '}';
+    }
 }
