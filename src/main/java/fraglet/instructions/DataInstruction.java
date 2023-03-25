@@ -11,7 +11,7 @@ public class DataInstruction extends Instruction{
 
     public BitSet getData() {
         return data;
-    }
+    } // NOTE: the returned data is a reference and so should only ever be used for reads and never writes to it
 
     public long getLongData() {
         if (data.length() == 0) { // handle empty bitset
@@ -20,4 +20,10 @@ public class DataInstruction extends Instruction{
         return data.toLongArray()[0];
     }
 
+
+    @Override
+    public String toString() {
+        return String.valueOf(getLongData());
+        // if want bitset do: return data;
+    }
 }
