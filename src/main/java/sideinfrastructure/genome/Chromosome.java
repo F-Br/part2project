@@ -143,4 +143,9 @@ public class Chromosome {
     public int getTotalScore() {
         return totalScore;
     }
+
+    public Codon getCodonAtLocation(int indexLocation) {
+        return codonList.get(indexLocation);
+    }
+
 }
