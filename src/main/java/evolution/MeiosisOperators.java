@@ -26,6 +26,13 @@ public class MeiosisOperators implements MeiosisInterface {
     Random rand = new Random();
 
 
+    private final double VAR_DEFAULT_WEIGHT = 1d;
+    private final double BLOCKING_PROMOTER_DEFAULT_WEIGHT = 1d;
+    private final double CONTINUING_PROMOTER_DEFAULT_WEIGHT = 1d;
+    private final double DATA_INSTRUCTION_DEFAULT_WEIGHT = 4d; // arguably 4 different data groups (counter, status codes, internal chromosome, external chromosome)
+    private final double OPERATOR_INSTRUCTION_DEFAULT_WEIGHT = 21d; // about 21 instrucitons
+
+
     private EnumeratedDistribution codonDefaultDistribution;
 
     public MeiosisOperators(DataDefinitions dataDefinitions) {
@@ -37,11 +44,11 @@ public class MeiosisOperators implements MeiosisInterface {
 
         List<Pair<String, Double>> defaultList = new ArrayList<Pair<String, Double>>(); // TODO: STILL NEED TO CHANGE THESE SO THAT THEY ARE MORE PROPORTIONAL TO THE NUMBER OF FORMS THEY CAN TAKE
 
-        defaultList.add(new Pair("VAR", 1.0));
-        defaultList.add(new Pair("BLOCKING_PROMOTER", 1.0));
-        defaultList.add(new Pair("CONTINUING_PROMOTER", 1.0));
-        defaultList.add(new Pair("data INSTRUCTION", 1.0));
-        defaultList.add(new Pair("operator INSTRUCTION", 1.0));
+        defaultList.add(new Pair("VAR", VAR_DEFAULT_WEIGHT));
+        defaultList.add(new Pair("BLOCKING_PROMOTER", BLOCKING_PROMOTER_DEFAULT_WEIGHT));
+        defaultList.add(new Pair("CONTINUING_PROMOTER", CONTINUING_PROMOTER_DEFAULT_WEIGHT));
+        defaultList.add(new Pair("data INSTRUCTION", DATA_INSTRUCTION_DEFAULT_WEIGHT));
+        defaultList.add(new Pair("operator INSTRUCTION", OPERATOR_INSTRUCTION_DEFAULT_WEIGHT));
 
         this.codonDefaultDistribution = new EnumeratedDistribution(defaultList);
     }
@@ -251,10 +258,10 @@ public class MeiosisOperators implements MeiosisInterface {
             case BLOCKING_PROMOTER: {
                 List<Pair<String, Double>> list = new ArrayList<Pair<String, Double>>();
                 list.add(new Pair("deletion", 1.0));
-                list.add(new Pair("insertion", 1.0));
+                list.add(new Pair("insertion", 4d));
                 list.add(new Pair("VAR", 1.0));
-                list.add(new Pair("BLOCKING_PROMOTER", 1.0));
-                list.add(new Pair("CONTINUING_PROMOTER", 1.0));
+                list.add(new Pair("BLOCKING_PROMOTER", 20d));
+                list.add(new Pair("CONTINUING_PROMOTER", 10d));
                 list.add(new Pair("data INSTRUCTION", 1.0));
                 list.add(new Pair("operator INSTRUCTION", 1.0));
                 EnumeratedDistribution e = new EnumeratedDistribution(list);
@@ -299,10 +306,10 @@ public class MeiosisOperators implements MeiosisInterface {
             case CONTINUING_PROMOTER: {
                 List<Pair<String, Double>> list = new ArrayList<Pair<String, Double>>();
                 list.add(new Pair("deletion", 1.0));
-                list.add(new Pair("insertion", 1.0));
+                list.add(new Pair("insertion", 4d));
                 list.add(new Pair("VAR", 1.0));
-                list.add(new Pair("BLOCKING_PROMOTER", 1.0));
-                list.add(new Pair("CONTINUING_PROMOTER", 1.0));
+                list.add(new Pair("BLOCKING_PROMOTER", 10d));
+                list.add(new Pair("CONTINUING_PROMOTER", 20d));
                 list.add(new Pair("data INSTRUCTION", 1.0));
                 list.add(new Pair("operator INSTRUCTION", 1.0));
                 EnumeratedDistribution e = new EnumeratedDistribution(list);
@@ -346,13 +353,25 @@ public class MeiosisOperators implements MeiosisInterface {
             // Specialised: data INSTRUCTION (data instruction more likely to go to different data instruction or VAR) - therefore need check if data instruction
             case INSTRUCTION: {
                 List<Pair<String, Double>> list = new ArrayList<Pair<String, Double>>();
-                list.add(new Pair("deletion", 1.0));
-                list.add(new Pair("insertion", 1.0));
-                list.add(new Pair("VAR", 1.0));
-                list.add(new Pair("BLOCKING_PROMOTER", 1.0));
-                list.add(new Pair("CONTINUING_PROMOTER", 1.0));
-                list.add(new Pair("data INSTRUCTION", 1.0));
-                list.add(new Pair("operator INSTRUCTION", 1.0));
+                if (codonList.get(index).getInstruction().getInstructionTag() == InstructionTag.DATA) {// different distribution if data or operator instruction:
+                    // data instruction
+                    list.add(new Pair("deletion", 2d)); // new data value before or after probably helpful
+                    list.add(new Pair("insertion", 2d));
+                    list.add(new Pair("VAR", 5d)); // syntax makes more sense if becomes var
+                    list.add(new Pair("BLOCKING_PROMOTER", 1.0));
+                    list.add(new Pair("CONTINUING_PROMOTER", 1.0));
+                    list.add(new Pair("data INSTRUCTION", 30d)); // better to budge data's value around probably
+                    list.add(new Pair("operator INSTRUCTION", 1.0));
+                } else {
+                    // operator instruction
+                    list.add(new Pair("deletion", 6d)); // better to expand or remove instruction values
+                    list.add(new Pair("insertion", 7d));
+                    list.add(new Pair("VAR", 1.0));
+                    list.add(new Pair("BLOCKING_PROMOTER", 1.0));
+                    list.add(new Pair("CONTINUING_PROMOTER", 1.0));
+                    list.add(new Pair("data INSTRUCTION", 1.0));
+                    list.add(new Pair("operator INSTRUCTION", 40d)); // probably best to transition to new self
+                }
                 EnumeratedDistribution e = new EnumeratedDistribution(list);
 
                 String sample = e.sample().toString();
@@ -379,7 +398,7 @@ public class MeiosisOperators implements MeiosisInterface {
 
                     case "data INSTRUCTION":
                         // check if current codon is data instruction, in which case need specialised implementation
-                        if (codonList.get(index).getInstruction() instanceof DataInstruction) { // is data instruction codon
+                        if (codonList.get(index).getInstruction().getInstructionTag() == InstructionTag.DATA) { // is data instruction codon
                             if (rand.nextDouble() < PROB_DATA_CODON_TO_RANDOM_DATA_CODON) { // data codon to random data codon possibility
                                 codonList = dataInstructionDefault(codonList, index, chromosomeIndex);
                             }
@@ -424,13 +443,13 @@ public class MeiosisOperators implements MeiosisInterface {
             // Specialised: N/A
             case VAR: {
                 List<Pair<String, Double>> list = new ArrayList<Pair<String, Double>>();
-                list.add(new Pair("deletion", 1.0));
-                list.add(new Pair("insertion", 1.0));
-                list.add(new Pair("VAR", 1.0));
-                list.add(new Pair("BLOCKING_PROMOTER", 1.0));
-                list.add(new Pair("CONTINUING_PROMOTER", 1.0));
-                list.add(new Pair("data INSTRUCTION", 1.0));
-                list.add(new Pair("operator INSTRUCTION", 1.0));
+                list.add(new Pair("deletion", 2d));
+                list.add(new Pair("insertion", 1d));
+                list.add(new Pair("VAR", 0d)); // shouldnt transition to self
+                list.add(new Pair("BLOCKING_PROMOTER", BLOCKING_PROMOTER_DEFAULT_WEIGHT));
+                list.add(new Pair("CONTINUING_PROMOTER", CONTINUING_PROMOTER_DEFAULT_WEIGHT));
+                list.add(new Pair("data INSTRUCTION", DATA_INSTRUCTION_DEFAULT_WEIGHT));
+                list.add(new Pair("operator INSTRUCTION", OPERATOR_INSTRUCTION_DEFAULT_WEIGHT));
                 EnumeratedDistribution e = new EnumeratedDistribution(list);
 
                 String sample = e.sample().toString();
