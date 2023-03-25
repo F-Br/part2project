@@ -1,5 +1,10 @@
 package fraglet.instructions;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+
 public enum InstructionTag {
     DATA(false, true, false),
 
@@ -28,6 +33,7 @@ public enum InstructionTag {
 
 
 
+    static Random rand = new Random();
 
 
     private boolean isNopWhenAtHead = false;
@@ -53,6 +59,12 @@ public enum InstructionTag {
 
     public boolean isMatchInstruction() {
         return isMatchInstruction;
+    }
+
+    public static InstructionTag getRandomOperatorInstructionTag() {
+        List<InstructionTag> validOperatorInstructions = new ArrayList<>(Arrays.asList(InstructionTag.values()));
+        validOperatorInstructions.remove(InstructionTag.DATA);
+        return validOperatorInstructions.get(rand.nextInt(validOperatorInstructions.size()));
     }
 
 
