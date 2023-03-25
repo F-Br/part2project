@@ -27,15 +27,18 @@ public class MeiosisOperators implements MeiosisInterface {
 
 
     private final double VAR_DEFAULT_WEIGHT = 1d;
-    private final double BLOCKING_PROMOTER_DEFAULT_WEIGHT = 1d;
-    private final double CONTINUING_PROMOTER_DEFAULT_WEIGHT = 1d;
+    private final double BLOCKING_PROMOTER_DEFAULT_WEIGHT = 0.5d;
+    private final double CONTINUING_PROMOTER_DEFAULT_WEIGHT = 0.5d;
     private final double DATA_INSTRUCTION_DEFAULT_WEIGHT = 4d; // arguably 4 different data groups (counter, status codes, internal chromosome, external chromosome)
     private final double OPERATOR_INSTRUCTION_DEFAULT_WEIGHT = 21d; // about 21 instrucitons
+
+    private final double mutationRate;
 
 
     private EnumeratedDistribution codonDefaultDistribution;
 
-    public MeiosisOperators(DataDefinitions dataDefinitions) {
+    public MeiosisOperators(DataDefinitions dataDefinitions, double mutationRate) {
+        // mutation individual setup:
         this.dataDefinitions = dataDefinitions;
         this.NUM_CHROMOSOME_PAIRS = dataDefinitions.getNumberChromosomePairs();
         if (DATA_CHROMOSOME_GROUP_MUTATION_MAGNITUDE > dataDefinitions.getChromosomeDataStartingValue()) {
@@ -51,6 +54,12 @@ public class MeiosisOperators implements MeiosisInterface {
         defaultList.add(new Pair("operator INSTRUCTION", OPERATOR_INSTRUCTION_DEFAULT_WEIGHT));
 
         this.codonDefaultDistribution = new EnumeratedDistribution(defaultList);
+
+        // mutation apply all setup:
+        this.mutationRate = mutationRate;
+        if ((mutationRate > 1d) || (mutationRate < 0d)) {
+            throw new IllegalArgumentException("mutationRate must be between 0 and 1, instead it was " + mutationRate);
+        }
     }
 
     private List<Codon> deleteCodon(List<Codon> codonList, int index) {
@@ -233,7 +242,7 @@ public class MeiosisOperators implements MeiosisInterface {
     }
 
     // TODO: change this back to a private method
-    public List<Codon> applySpecificMutation(List<Codon> codonList, int index, int chromosomeIndex) {
+    private List<Codon> applySpecificMutation(List<Codon> codonList, int index, int chromosomeIndex) {
 
         // check which bucket codon falls into and produce that result:
         // DATA INSTRUCTION
@@ -358,8 +367,8 @@ public class MeiosisOperators implements MeiosisInterface {
                     list.add(new Pair("deletion", 2d)); // new data value before or after probably helpful
                     list.add(new Pair("insertion", 2d));
                     list.add(new Pair("VAR", 5d)); // syntax makes more sense if becomes var
-                    list.add(new Pair("BLOCKING_PROMOTER", 1.0));
-                    list.add(new Pair("CONTINUING_PROMOTER", 1.0));
+                    list.add(new Pair("BLOCKING_PROMOTER", 0.5));
+                    list.add(new Pair("CONTINUING_PROMOTER", 0.5));
                     list.add(new Pair("data INSTRUCTION", 30d)); // better to budge data's value around probably
                     list.add(new Pair("operator INSTRUCTION", 1.0));
                 } else {
@@ -367,8 +376,8 @@ public class MeiosisOperators implements MeiosisInterface {
                     list.add(new Pair("deletion", 6d)); // better to expand or remove instruction values
                     list.add(new Pair("insertion", 7d));
                     list.add(new Pair("VAR", 1.0));
-                    list.add(new Pair("BLOCKING_PROMOTER", 1.0));
-                    list.add(new Pair("CONTINUING_PROMOTER", 1.0));
+                    list.add(new Pair("BLOCKING_PROMOTER", 0.5));
+                    list.add(new Pair("CONTINUING_PROMOTER", 0.5));
                     list.add(new Pair("data INSTRUCTION", 1.0));
                     list.add(new Pair("operator INSTRUCTION", 40d)); // probably best to transition to new self
                 }
@@ -496,8 +505,32 @@ public class MeiosisOperators implements MeiosisInterface {
     }
 
     @Override
-    public Genome performAllMutations(Genome genome) {
-        return null;
+    public List<Codon> performAllMutations(List<Codon> codonList, int chromosomeIndex) {
+        // need to keep track of how insertions and deletions will affect the length, hence additional setup
+        int codonListInitialSize = codonList.size();
+        int codonListPreviousSize = codonListInitialSize;
+
+        int actualIndex = 0;
+        for (int pretendIndex = 0; pretendIndex < codonListInitialSize; pretendIndex++) {
+            if (rand.nextDouble() < mutationRate) {
+                codonList = applySpecificMutation(codonList, actualIndex, chromosomeIndex);
+                if (codonList.size() == codonListPreviousSize) {
+                    continue;
+                }
+                else if (codonList.size() == codonListPreviousSize + 1) {
+                    actualIndex++;
+                    codonListPreviousSize++;
+                }
+                else if (codonList.size() == codonListPreviousSize - 1) {
+                    actualIndex--;
+                    codonListPreviousSize--;
+                }
+            }
+
+            actualIndex++;
+        }
+
+        return codonList;
     }
 
     private ChromosomePair applySpecificCrossover(ChromosomePair chromosomePair, int crossoverIndex) { // TODO: a single index or more?
