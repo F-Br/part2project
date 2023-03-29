@@ -6,15 +6,16 @@ import fraglet.instructions.InstructionTag;
 import org.apache.commons.math3.distribution.EnumeratedDistribution;
 
 import org.apache.commons.math3.util.Pair;
+import org.javatuples.Triplet;
 import sideinfrastructure.genome.Chromosome;
 import sideinfrastructure.genome.Codon;
 import sideinfrastructure.genome.CodonType;
 import sideinfrastructure.genome.Genome;
 
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.IntStream;
+
+import static java.util.Collections.binarySearch;
 
 public class MeiosisOperators implements MeiosisInterface {
 
@@ -454,7 +455,7 @@ public class MeiosisOperators implements MeiosisInterface {
                 List<Pair<String, Double>> list = new ArrayList<Pair<String, Double>>();
                 list.add(new Pair("deletion", 2d));
                 list.add(new Pair("insertion", 1d));
-                list.add(new Pair("VAR", 0d)); // shouldnt transition to self
+                list.add(new Pair("VAR", 0d)); // shouldn't transition to self
                 list.add(new Pair("BLOCKING_PROMOTER", BLOCKING_PROMOTER_DEFAULT_WEIGHT));
                 list.add(new Pair("CONTINUING_PROMOTER", CONTINUING_PROMOTER_DEFAULT_WEIGHT));
                 list.add(new Pair("data INSTRUCTION", DATA_INSTRUCTION_DEFAULT_WEIGHT));
@@ -533,14 +534,251 @@ public class MeiosisOperators implements MeiosisInterface {
         return codonList;
     }
 
-    private ChromosomePair applySpecificCrossover(ChromosomePair chromosomePair, int crossoverIndex) { // TODO: a single index or more?
-        return null;
+
+
+    private List<Triplet<Integer, Boolean, Integer>> generateCrossoverAuxiliaryList(List<Codon> codonList) {
+        List<Triplet<Integer, Boolean, Integer>> auxiliaryList = new LinkedList<>();
+        for (int i = 0; i < codonList.size(); i++) {
+            Codon codon = codonList.get(i);
+            if (codon.getCodonType() == CodonType.BLOCKING_PROMOTER || codon.getCodonType() == CodonType.CONTINUING_PROMOTER) {
+                auxiliaryList.add(new Triplet<>(codon.getPID(), true, i));
+            }
+        }
+        return auxiliaryList;
+    }
+
+    private List<Codon> regenerateSingleCodonList(Pair<List<Triplet<Integer, Boolean, Integer>>, List<Triplet<Integer, Boolean, Integer>>> crossedOverAuxiliaryLists, Pair<List<Codon>, List<Codon>> originalCodonLists, int listNumToRegenerate) {
+        List<Triplet<Integer, Boolean, Integer>> auxList1; // auxList1 is chosen based on the listNumToRegenerate
+        List<Codon> originalCodonList1;
+        List<Codon> originalCodonList2;
+
+        if (listNumToRegenerate == 1) {
+            auxList1 = crossedOverAuxiliaryLists.getFirst();
+            originalCodonList1 = originalCodonLists.getFirst();
+            originalCodonList2 = originalCodonLists.getSecond();
+        }
+        else if (listNumToRegenerate == 2) {
+            auxList1 = crossedOverAuxiliaryLists.getSecond();
+            originalCodonList1 = originalCodonLists.getSecond();
+            originalCodonList2 = originalCodonLists.getFirst();
+        }
+        else {
+            throw new IllegalArgumentException("listNumToRegenerate must be 1 or 2, was instead given " + listNumToRegenerate);
+        }
+
+
+        List<Codon> finalCodonList = new LinkedList<>();
+
+        for (Triplet<Integer, Boolean, Integer> tripletPID : auxList1) {
+            // NOTE: assuming that chromosomes MUST start with a promoter of some sort
+            List<Codon> codonListOfPromoter;
+            int codonListOfPromoterSize;
+
+            if (tripletPID.getValue1()) { // originally from auxList1?
+                codonListOfPromoter = originalCodonList1;
+                codonListOfPromoterSize = codonListOfPromoter.size();
+            } else {
+                codonListOfPromoter = originalCodonList2;
+                codonListOfPromoterSize = originalCodonList2.size();
+            }
+
+            int currentIndex = tripletPID.getValue2();
+            finalCodonList.add(codonListOfPromoter.get(currentIndex));
+            currentIndex++;
+
+            while (currentIndex < codonListOfPromoterSize) {
+                Codon addingCodon = codonListOfPromoter.get(currentIndex);
+                if (addingCodon.getCodonType() == CodonType.BLOCKING_PROMOTER || addingCodon.getCodonType() == CodonType.CONTINUING_PROMOTER) {
+                    break;
+                } else {
+                    finalCodonList.add(codonListOfPromoter.get(currentIndex));
+                }
+                currentIndex++;
+            }
+        }
+
+        return finalCodonList;
+    }
+
+
+    private Pair<List<Codon>, List<Codon>> regenerateCrossedOverCodonLists(Pair<List<Triplet<Integer, Boolean, Integer>>, List<Triplet<Integer, Boolean, Integer>>> crossedOverAuxiliaryLists, Pair<List<Codon>, List<Codon>> originalCodonLists) {
+
+        List<Codon> finalCodonList1 = regenerateSingleCodonList(crossedOverAuxiliaryLists, originalCodonLists, 1);
+        List<Codon> finalCodonList2 = regenerateSingleCodonList(crossedOverAuxiliaryLists, originalCodonLists, 2);
+
+        return new Pair<>(finalCodonList1, finalCodonList2);
+    }
+
+
+    private Triplet<Integer, Boolean, Integer> findTripletClosestPID(List<Triplet<Integer, Boolean, Integer>> auxList, int targetPID) {
+        return findTripletAndIndexClosestPID(auxList, targetPID).getFirst();
+    }
+
+    private Pair<Triplet<Integer, Boolean, Integer>, Integer> findTripletAndIndexClosestPID(List<Triplet<Integer, Boolean, Integer>> auxList, int targetPID) {
+        // lists to search will be relatively small (<100) therefore will go for a simpler scan approach rather than a binary search
+
+        Triplet<Integer, Boolean, Integer> closestTriplet = auxList.get(0);
+        int closestDistance = Math.abs(closestTriplet.getValue0() - targetPID);
+        int i = 0;
+        int auxIndex = 0;
+        for (Triplet<Integer, Boolean, Integer> currentTriplet : auxList) {
+            if (Math.abs(currentTriplet.getValue0() - targetPID) <= closestDistance) { // new closer value
+                closestTriplet = currentTriplet;
+                closestDistance = Math.abs(closestTriplet.getValue0() - targetPID);
+                auxIndex = i;
+            }
+            i++;
+        }
+
+        return new Pair<>(closestTriplet, auxIndex);
     }
 
     @Override
-    public ChromosomePair performAllCrossovers(ChromosomePair chromosomePair) {
-        return null;
+    public Pair<List<Codon>, List<Codon>> performAllCrossovers(Pair<List<Codon>, List<Codon>> pairCodonLists, int chromosomeIndex) {
+
+        // NOTE: returned list NOT gauranteed to be in order of PIDs. Therefore, should sort after if this is important
+
+        // codon lists arrive in definitely sorted order
+        // turn each codon list into a purely PID auxiliary list with pairs of (int PID, boolean fromList1)
+        // for AL1 determine number of breaks
+        // give indexes for where these breaks should happen
+        // for loop (each of the break indexes):
+            // swap at index function
+        // sort lists by PID in pairs
+        // reconstruct codonLists from these
+
+
+        // after rethink:
+        // generate number of breaks out of dist: 0 - 0.1, 1 - 0.6, 2 - 0.3
+        // when generating indexes:
+        //      easy for 0 and 1
+        //      for 2:  generate index between 0 and half chromosome group size (round up)
+        //              add half chromosome group size to index and create list of available PIDs with values greater than this
+        //              randomly select 1 as second index, if none then either use this index with 50% or find an index closest to the one half chromosome group size away and use that
+        // for swapping:
+        //      0 and 1 are easy and can be done in many ways
+        //      for 2:  do weird building list algorithm and don't think too much about it - the most important thing is that it works very well most of the time.
+
+
+        // crossover point algorithm:
+        double probZeroCrossovers = 0.1;
+        double probOneCrossovers = 0.6;
+        // double probTwoCrossovers = 0.3;
+        int numCrossoverSpots;
+        double randomValue = rand.nextDouble();
+        if (randomValue < probZeroCrossovers) {
+            // (numCrossoverSpots == 0)
+            return pairCodonLists;
+        }
+        else if (randomValue < probZeroCrossovers + probOneCrossovers) {
+            numCrossoverSpots = 1;
+        }
+        else {
+            numCrossoverSpots = 2;
+        }
+
+        List<Triplet<Integer, Boolean, Integer>> auxList1 = generateCrossoverAuxiliaryList(pairCodonLists.getFirst()); // TODO: pair will also have to include index in codonList of PID (to deal with same PID promoters)
+        List<Triplet<Integer, Boolean, Integer>> auxList2 = generateCrossoverAuxiliaryList(pairCodonLists.getSecond());
+
+        if (auxList1.size() < numCrossoverSpots || auxList2.size() < numCrossoverSpots) { // TODO: SOMEWHERE, need to add logic for empty list by adding single promoter (rare case but should deal with it somewhere)
+            return pairCodonLists;
+        }
+
+        // generate indexes:
+        List<Integer> crossoverSpots = new ArrayList<>();
+        if (numCrossoverSpots == 1) { // (numCrossoverSpots == 1)
+            crossoverSpots.add(rand.nextInt(auxList1.size()));
+        }
+        else { // (numCrossoverSpots == 2)
+            int attemptedPID = dataDefinitions.getChromosomeDataStartingValueForIndex(chromosomeIndex) + rand.nextInt(dataDefinitions.getInternalChromosomeDataGroupSize()/2);
+            Pair<Triplet<Integer, Boolean, Integer>, Integer> firstTripletIndexSplitPair = findTripletAndIndexClosestPID(auxList1, attemptedPID);
+            Triplet<Integer, Boolean, Integer> firstTriplet = firstTripletIndexSplitPair.getFirst();
+            int minimumSecondPID = firstTriplet.getValue0() + (dataDefinitions.getInternalChromosomeDataGroupSize()/2);
+            boolean secondCrossoverSpotExists = true;
+            for (int i = 0; i < auxList1.size(); i++) {
+                if (auxList1.get(i).getValue0() >= minimumSecondPID) { // here i = index of minimumSecondPID
+                    crossoverSpots.add(firstTripletIndexSplitPair.getSecond());
+                    System.out.println(firstTripletIndexSplitPair.getSecond());
+                    System.out.println(i);
+                    crossoverSpots.add(i + rand.nextInt(auxList1.size() - i));
+                    System.out.println(crossoverSpots.get(0));
+                    break;
+                }
+                else if (i == auxList1.size() - 1) { // Does not exist a valid promoter site that far away
+                    numCrossoverSpots = 1;
+                    crossoverSpots.add(rand.nextInt(auxList1.size())); // do single crossover spot
+                    break;
+                }
+            }
+        }
+
+
+        // swapping algorithm:
+        List<Triplet<Integer, Boolean, Integer>> newAuxList1 = auxList1;
+        List<Triplet<Integer, Boolean, Integer>> newAuxList2 = auxList2;
+
+        System.out.println(crossoverSpots);
+        for (int swappingIndex : crossoverSpots) {
+            Triplet<Integer, Boolean, Integer> swappingTriplet = auxList1.get(swappingIndex);
+            Triplet<Integer, Boolean, Integer> swappedTriplet = findTripletClosestPID(newAuxList2, swappingTriplet.getValue0());
+
+            List<Triplet<Integer, Boolean, Integer>> tempAuxList1 = new LinkedList<>();
+            List<Triplet<Integer, Boolean, Integer>> tempAuxList2 = new LinkedList<>();
+
+            Iterator iterList1 = newAuxList1.iterator();
+            Iterator iterList2 = newAuxList2.iterator();
+
+            while (iterList1.hasNext()) {
+                Triplet<Integer, Boolean, Integer> currentTriplet = (Triplet<Integer, Boolean, Integer>) iterList1.next();
+                if (currentTriplet == swappingTriplet) {
+                    break;
+                }
+                else {
+                    tempAuxList1.add(currentTriplet);
+                }
+            }
+            while (iterList2.hasNext()) {
+                Triplet<Integer, Boolean, Integer> currentTriplet = (Triplet<Integer, Boolean, Integer>) iterList2.next();
+                if (currentTriplet == swappedTriplet) {
+                    break;
+                }
+                else {
+                    tempAuxList2.add(currentTriplet);
+                }
+            }
+
+            swappingTriplet = swappingTriplet.setAt1(!swappingTriplet.getValue1());
+            tempAuxList2.add(swappingTriplet);
+            swappedTriplet = swappedTriplet.setAt1(!swappedTriplet.getValue1());
+            tempAuxList1.add(swappedTriplet);
+
+            while (iterList1.hasNext()) {
+                Triplet<Integer, Boolean, Integer> currentTriplet = (Triplet<Integer, Boolean, Integer>) iterList1.next();
+                currentTriplet = currentTriplet.setAt1(!currentTriplet.getValue1());
+                tempAuxList2.add(currentTriplet);
+            }
+            while (iterList2.hasNext()) {
+                Triplet<Integer, Boolean, Integer> currentTriplet = (Triplet<Integer, Boolean, Integer>) iterList2.next();
+                currentTriplet = currentTriplet.setAt1(!currentTriplet.getValue1());
+                tempAuxList1.add(currentTriplet);
+            }
+
+            if (numCrossoverSpots == 2) {
+                newAuxList1 = tempAuxList2;
+                newAuxList2 = tempAuxList1;
+            }
+            else {
+                newAuxList1 = tempAuxList1;
+                newAuxList2 = tempAuxList2;
+            }
+
+        }
+
+
+        return regenerateCrossedOverCodonLists(new Pair<>(newAuxList1, newAuxList2), pairCodonLists);
     }
+
+    // TOD: write a method to sort a list by PIDs
 
     @Override
     public List<Chromosome> performMeiosis(Genome genome) {
