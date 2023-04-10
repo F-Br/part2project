@@ -13,7 +13,6 @@ import sideinfrastructure.genome.CodonType;
 import sideinfrastructure.genome.Genome;
 
 import java.util.*;
-import java.util.stream.IntStream;
 
 import static java.util.Collections.binarySearch;
 
@@ -37,6 +36,7 @@ public class MeiosisOperators implements MeiosisInterface {
 
 
     private EnumeratedDistribution codonDefaultDistribution;
+    private AuxiliaryListComparator auxiliaryListComparator;
 
     public MeiosisOperators(DataDefinitions dataDefinitions, double mutationRate) {
         // mutation individual setup:
@@ -774,11 +774,20 @@ public class MeiosisOperators implements MeiosisInterface {
 
         }
 
+        newAuxList1 = sortAuxiliaryList(newAuxList1);
+        newAuxList2 = sortAuxiliaryList(newAuxList2);
 
         return regenerateCrossedOverCodonLists(new Pair<>(newAuxList1, newAuxList2), pairCodonLists);
     }
 
-    // TOD: write a method to sort a list by PIDs
+
+    private List<Triplet<Integer, Boolean, Integer>> sortAuxiliaryList(List<Triplet<Integer, Boolean, Integer>> auxList) {
+        System.out.println("asjdfnafnafnaf");
+        System.out.println(auxList);
+        auxList.sort(auxiliaryListComparator); // uses timsort, as list is usually going to be almost sorted and will also be small, use insertion sort if want a speedup here
+        System.out.println(auxList);
+        return auxList;
+    }
 
     @Override
     public List<Chromosome> performMeiosis(Genome genome) {
