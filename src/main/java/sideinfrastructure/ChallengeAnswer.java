@@ -5,8 +5,8 @@ import java.util.BitSet;
 import java.util.Random;
 
 public class ChallengeAnswer {
-    private int numberOfRows = 32; // TODO: rather than hardwire this, could have it randomly generated each new challenge and send the result over to receiver side
-    private int numberOfBytesInRow = 4;
+    public final int numberOfRows = 32; // TODO: rather than hardwire this, could have it randomly generated each new challenge and send the result over to receiver side
+    public final int numberOfBytesInRow = 4;
     private int numberOfBitsInRow = 8 * numberOfBytesInRow;
     private ArrayList<BitSet> totalAnswer;
 
@@ -36,8 +36,8 @@ public class ChallengeAnswer {
         }
     }
 
-    public BitSet getRow(int index) {
-        return totalAnswer.get(index);
+    public BitSet getRow(long index) {
+        return totalAnswer.get((int) index);
     }
 
 }

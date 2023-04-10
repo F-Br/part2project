@@ -5,10 +5,12 @@ import java.util.BitSet;
 import java.util.Random;
 
 public class ChallengeQuestion {
-    private int numberOfRows = 32; // TODO: rather than hardwire this, could have it randomly generated each new challenge and send the result over to receiver side
-    private int numberOfBytesInRow = 4;
+    public final int numberOfRows = 32; // TODO: rather than hardwire this, could have it randomly generated each new challenge and send the result over to receiver side
+    public final int numberOfBytesInRow = 4;
     private ArrayList<BitSet> totalChallenge;
     private Random rnd = new Random();
+    private boolean extractedAtleastOnce = false;
+    private boolean sentAfterExtraction = false;
 
     public ChallengeQuestion() {
         createNewChallengeQuestion();
@@ -27,9 +29,23 @@ public class ChallengeQuestion {
         if (index >= numberOfRows) {
             return null;
         }
+        extractedAtleastOnce = true;
         return totalChallenge.get((int) index);
     }
 
+    public void checkIfSentAfterExtraction() {
+        if ((!sentAfterExtraction) && extractedAtleastOnce) {
+            sentAfterExtraction = true;
+        }
+    }
+
+    public boolean isExtractedAtleastOnce() {
+        return extractedAtleastOnce;
+    }
+
+    public boolean isSentAfterExtraction() {
+        return sentAfterExtraction;
+    }
 }
 
 
