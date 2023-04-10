@@ -291,7 +291,9 @@ public class FragletParser {
 
                     fraglet.pollHeadInstruction();
                     currentEndpoint.sendFraglet(fraglet); // TODO: need to fix packet problems
-                    break fraglet_parsing_loop; // TODO: may need to check that logic which follows after loop doesn't affect this fraglet
+                    challengeQuestion.checkIfSentAfterExtraction();
+                    return; // TODO: check this is correct, next line should be deleted i think
+                    // break fraglet_parsing_loop; // TODO: may need to check that logic which follows after loop doesn't affect this fraglet
                 }
 
                 case SPLIT: {
