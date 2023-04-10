@@ -37,6 +37,7 @@ public class MeiosisOperators implements MeiosisInterface {
 
     private EnumeratedDistribution codonDefaultDistribution;
     private AuxiliaryListComparator auxiliaryListComparator;
+    private FitnessListComparator fitnessListComparator;
 
     public MeiosisOperators(DataDefinitions dataDefinitions, double mutationRate) {
         // mutation individual setup:
@@ -798,4 +799,107 @@ public class MeiosisOperators implements MeiosisInterface {
     public Genome fertilisation(List<Chromosome> haploidGenome1, List<Chromosome> haploidGenome2) {
         return null;
     }
+
+    private List<Codon> copyCodonList(List<Codon> originalCodonList) {
+        List<Codon> newCodonList = new LinkedList<>();
+        for (Codon codon : originalCodonList) {
+            codon_type_check:
+            switch (codon.getCodonType()) {
+                case BLOCKING_PROMOTER:
+                    newCodonList.add(new Codon(CodonType.BLOCKING_PROMOTER, codon.getPID()));
+                    break codon_type_check;
+
+                case CONTINUING_PROMOTER:
+                    newCodonList.add(new Codon(CodonType.CONTINUING_PROMOTER, codon.getPID()));
+                    break codon_type_check;
+
+                case INSTRUCTION:
+                    InstructionTag instructionTag = codon.getInstruction().getInstructionTag();
+                    if (instructionTag != InstructionTag.DATA) {
+                        newCodonList.add(new Codon(CodonType.INSTRUCTION, new Instruction(instructionTag)));
+                    }
+                    else { // is data instruction
+                        BitSet newBitSet = BitSet.valueOf(new long[] {((DataInstruction) codon.getInstruction()).getLongData()});
+                        DataInstruction dataInstruction = new DataInstruction(newBitSet);
+                        newCodonList.add(new Codon(CodonType.INSTRUCTION, dataInstruction));
+                    }
+                    break codon_type_check;
+
+                case VAR:
+                    newCodonList.add(new Codon(CodonType.VAR));
+                    break codon_type_check;
+            }
+        }
+        return newCodonList;
+    }
+
+    public EvolutionaryGenome copyEvolutionaryGenome(EvolutionaryGenome evolutionaryGenome) {
+        int genomeLength = evolutionaryGenome.getLength();
+        List<Pair<List<Codon>, List<Codon>>> newGenome = new LinkedList<>();
+        for (int i = 0; i < genomeLength; i++) {
+            Pair<List<Codon>, List<Codon>> originalChromPair = evolutionaryGenome.getChromosomePair(i);
+            newGenome.add(i, new Pair<>(copyCodonList(originalChromPair.getFirst()), copyCodonList(originalChromPair.getSecond())));
+        }
+        return new EvolutionaryGenome(newGenome);
+    }
+
+    public List<EvolutionaryGenome> selection(List<Pair<Float, EvolutionaryGenome>> fitnessList, int numElite) {
+        // remove poor performing genomes
+        fitnessList.sort(fitnessListComparator);
+        int fitnessListSize = fitnessList.size();
+        int genomesToRemove = (fitnessListSize - numElite)/3 + numElite;
+        fitnessList = fitnessList.subList(0, fitnessListSize - genomesToRemove);
+        fitnessListSize = fitnessList.size();
+
+        // create selectionList
+        List<Pair<Integer, EvolutionaryGenome>> selectionList = new ArrayList<>();
+        int i = 0;
+        for (Pair<Float, EvolutionaryGenome> fitnessGenomePair : fitnessList) {
+            if (i < fitnessListSize/2) {
+                selectionList.add(i, new Pair<>(2, fitnessGenomePair.getSecond()));
+            }
+            else {
+                selectionList.add(i, new Pair<>(1, fitnessGenomePair.getSecond()));
+            }
+            i++;
+        }
+
+        // new list
+        List<EvolutionaryGenome> nextGenerationList = new ArrayList<>();
+
+        // elitism
+        for (int j = 0; j < numElite; i++) {
+            nextGenerationList.add(copyEvolutionaryGenome(selectionList.get(j).getSecond()));
+        }
+
+        // meiosis and selection of the rest
+        int selectionListLength = selectionList.size();
+        while (selectionListLength > 0) {
+            int numNewGenomes = selectionList.get(0).getFirst();
+            for (int j = 0; i < numNewGenomes; j++) {
+                int randomIndex = 1 + rand.nextInt(selectionListLength - 1);
+                int previousReproductionCount = selectionList.get(randomIndex).getFirst();
+                EvolutionaryGenome randomGenome = selectionList.get(randomIndex).getSecond();
+                nextGenerationList.add(fertilisation(selectionList.get(0).getSecond(), randomGenome));
+                selectionList.remove(randomIndex);
+                if (previousReproductionCount == 2) { // still reproduces one more time
+                    selectionList.add(randomIndex, new Pair<>(1, randomGenome));
+                }
+                else {
+                    selectionListLength--;
+                }
+            }
+            selectionList.remove(0);
+            selectionListLength--;
+        }
+
+        return nextGenerationList;
+    }
+
+
+    // TODO: full crossover and mutation
+
+    // TODO: fertilisation (starts with making a working copy (NOT in place))
+
+
 }
