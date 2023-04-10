@@ -16,15 +16,14 @@ public class DefaultFitnessFunction extends FitnessFunction {
         this.bitMatchesTargetThreshold = (numBitsInRow * 7) / 8;
     }
 
-    public int scoreComparedRows(BitSet questionRow, BitSet answerRow) {
+    private int scoreComparedRows(BitSet questionRow, BitSet answerRow) {
         // will score by checking at least 7/8 of bits are correct, if so they are awarded 1, for every additional correct bit, they are awarded 1
         // if 32 bit row, then this is 0.000965% just by chance
         // Can determine matches through XOR, then negation, then length of list
 
         BitSet workingBitSet = questionRow.get(0, numBitsInRow);
         workingBitSet.xor(answerRow.get(0, numBitsInRow));
-        System.out.println(workingBitSet.size());
-        workingBitSet.flip(0, numBitsInRow);
+        workingBitSet.flip(0, numBitsInRow); // number of 1s now correspond to the matches
         int numBitsOverThreshold = workingBitSet.cardinality() - (bitMatchesTargetThreshold-1);
 
         return Math.max(0, numBitsOverThreshold);
@@ -39,7 +38,7 @@ public class DefaultFitnessFunction extends FitnessFunction {
                 score++;
 
                 for (long i = 0; i < numRows; i++) {
-                    score += scoreComparedRows(challengeQuestion.getRow(i), challengeAnswer.getRow(i));
+                    score += scoreComparedRows(challengeQuestion.fetchRowForFitness(i), challengeAnswer.fetchRowForFitness(i));
                 }
             }
         }
