@@ -40,4 +40,11 @@ public class ChallengeAnswer {
         return totalAnswer.get((int) index);
     }
 
+    public BitSet fetchRowForFitness(long index) {
+        if (index >= numberOfRows) {
+            return null;
+        }
+        return totalAnswer.get((int) index);
+    }
+
 }

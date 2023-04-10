@@ -33,6 +33,13 @@ public class ChallengeQuestion {
         return totalChallenge.get((int) index);
     }
 
+    public BitSet fetchRowForFitness(long index) {
+        if (index >= numberOfRows) {
+            return null;
+        }
+        return totalChallenge.get((int) index);
+    }
+
     public void checkIfSentAfterExtraction() {
         if ((!sentAfterExtraction) && extractedAtleastOnce) {
             sentAfterExtraction = true;
