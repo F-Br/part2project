@@ -638,6 +638,7 @@ public class MeiosisOperators implements MeiosisInterface {
     public Pair<List<Codon>, List<Codon>> performAllCrossovers(Pair<List<Codon>, List<Codon>> pairCodonLists, int chromosomeIndex) {
 
         // NOTE: returned list NOT gauranteed to be in order of PIDs. Therefore, should sort after if this is important
+        // ACTUAL NEW NOTE: I think the above is no longer true as we sort auxiliary lists before returning them
 
         // codon lists arrive in definitely sorted order
         // turn each codon list into a purely PID auxiliary list with pairs of (int PID, boolean fromList1)
@@ -791,13 +792,41 @@ public class MeiosisOperators implements MeiosisInterface {
     }
 
     @Override
-    public List<Chromosome> performMeiosis(Genome genome) {
-        return null;
+    public List<Codon> performMeiosisAndMutationForChromosomePair(Pair<List<Codon>, List<Codon>> chromosomePair, int chromosomeIndex) {
+        // meiosis
+        Pair<List<Codon>, List<Codon>> crossedOverChromosomePair = performAllCrossovers(chromosomePair, chromosomeIndex);
+
+        // select chromosome at random
+        List<Codon> haploidChromosome;
+        if (rand.nextBoolean()) {
+            haploidChromosome = crossedOverChromosomePair.getFirst();
+        }
+        else {
+            haploidChromosome = crossedOverChromosomePair.getSecond();
+        }
+
+        // mutation
+        List<Codon> finalNotSortedChromosome = performAllMutations(haploidChromosome, chromosomeIndex);
+
+        // sort
+        List<Triplet<Integer, Boolean, Integer>> finalAuxiliaryChromosome = generateCrossoverAuxiliaryList(finalNotSortedChromosome);
+        finalAuxiliaryChromosome = sortAuxiliaryList(finalAuxiliaryChromosome);
+        List<Codon> finalChromosome = regenerateSingleCodonList(new Pair<>(finalAuxiliaryChromosome, null), new Pair<>(finalNotSortedChromosome, null), 1);
+        return finalChromosome;
     }
 
     @Override
-    public Genome fertilisation(List<Chromosome> haploidGenome1, List<Chromosome> haploidGenome2) {
-        return null;
+    public EvolutionaryGenome fertilisation(EvolutionaryGenome diploidGenome1, EvolutionaryGenome diploidGenome2) {
+        // assuming inputs received are copies
+        // create new genome
+        List<Pair<List<Codon>, List<Codon>>> newGenome = new LinkedList<>();
+        // add members to genome after meiosis and mutation
+        for (int i = 0; i < diploidGenome1.getLength(); i++) {
+            Pair<List<Codon>, List<Codon>> chromosomePairDG1 = diploidGenome1.getChromosomePair(i);
+            Pair<List<Codon>, List<Codon>> chromosomePairDG2 = diploidGenome2.getChromosomePair(i);
+            newGenome.add(new Pair<>(performMeiosisAndMutationForChromosomePair(chromosomePairDG1, i), performMeiosisAndMutationForChromosomePair(chromosomePairDG2, i)));
+        }
+        return new EvolutionaryGenome(newGenome);
     }
 
     private List<Codon> copyCodonList(List<Codon> originalCodonList) {
@@ -879,8 +908,8 @@ public class MeiosisOperators implements MeiosisInterface {
             for (int j = 0; i < numNewGenomes; j++) {
                 int randomIndex = 1 + rand.nextInt(selectionListLength - 1);
                 int previousReproductionCount = selectionList.get(randomIndex).getFirst();
-                EvolutionaryGenome randomGenome = selectionList.get(randomIndex).getSecond();
-                nextGenerationList.add(fertilisation(selectionList.get(0).getSecond(), randomGenome));
+                EvolutionaryGenome randomGenome = copyEvolutionaryGenome(selectionList.get(randomIndex).getSecond());
+                nextGenerationList.add(fertilisation(copyEvolutionaryGenome(selectionList.get(0).getSecond()), randomGenome));
                 selectionList.remove(randomIndex);
                 if (previousReproductionCount == 2) { // still reproduces one more time
                     selectionList.add(randomIndex, new Pair<>(1, randomGenome));
@@ -896,6 +925,9 @@ public class MeiosisOperators implements MeiosisInterface {
         return nextGenerationList;
     }
 
+
+
+    // TODO: rename selection function to fullSelectionOfNextGeneration
 
     // TODO: full crossover and mutation
 
