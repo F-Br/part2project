@@ -872,7 +872,7 @@ public class MeiosisOperators implements MeiosisInterface {
         return new EvolutionaryGenome(newGenome);
     }
 
-    public List<EvolutionaryGenome> selection(List<Pair<Float, EvolutionaryGenome>> fitnessList, int numElite) {
+    public List<EvolutionaryGenome> fullSelectionOfNextGeneration(List<Pair<Float, EvolutionaryGenome>> fitnessList, int numElite) {
         // remove poor performing genomes
         fitnessList.sort(fitnessListComparator);
         int fitnessListSize = fitnessList.size();
@@ -928,10 +928,5 @@ public class MeiosisOperators implements MeiosisInterface {
 
 
     // TODO: rename selection function to fullSelectionOfNextGeneration
-
-    // TODO: full crossover and mutation
-
-    // TODO: fertilisation (starts with making a working copy (NOT in place))
-
 
 }
