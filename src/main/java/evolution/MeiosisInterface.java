@@ -12,8 +12,8 @@ public interface MeiosisInterface {
 
     Pair<List<Codon>, List<Codon>> performAllCrossovers(Pair<List<Codon>, List<Codon>> pairCodonLists, int chromosomeIndex);
 
-    List<Chromosome> performMeiosis(Genome genome);
+    List<Codon> performMeiosisAndMutationForChromosomePair(Pair<List<Codon>, List<Codon>> pairCodonLists, int chromosomeNumber);
 
-    Genome fertilisation(List<Chromosome> haploidGenome1, List<Chromosome> haploidGenome2);
+    EvolutionaryGenome fertilisation(EvolutionaryGenome diploidGenome1, EvolutionaryGenome diploidGenome2);
 
 }
