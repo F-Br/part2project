@@ -16,8 +16,8 @@ public class SideController {
     // will handle genome, vat, parser, side identifier
     // will initialise it all as empty
 
-    private final int senderChromosomeStartingChromPID = 1000;
-    private final int receiverChromosomeStartingChromPID = 1100;
+    private final int senderChromosomeStartingChromPID = 100;
+    private final int receiverChromosomeStartingChromPID = 400;
 
     private final int NUMBER_GENES_PROMOTED_PER_STEP = 1;
     private final int NUMBER_FRAGLETS_PARSED_PER_STEP = 2;
@@ -26,6 +26,14 @@ public class SideController {
     private FragletVat fragletVat;
     private FragletParser fragletParser;
     private Genome genome;
+
+    public ChallengeAnswer getChallengeAnswer() {
+        return challengeAnswer;
+    }
+
+    public ChallengeQuestion getChallengeQuestion() {
+        return challengeQuestion;
+    }
 
     private ChallengeAnswer challengeAnswer;
     private ChallengeQuestion challengeQuestion;
