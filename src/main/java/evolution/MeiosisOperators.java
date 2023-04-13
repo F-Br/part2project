@@ -37,7 +37,7 @@ public class MeiosisOperators implements MeiosisInterface {
 
     private EnumeratedDistribution codonDefaultDistribution;
     private AuxiliaryListComparator auxiliaryListComparator;
-    private FitnessListComparator fitnessListComparator;
+    private FitnessListComparator fitnessListComparator = new FitnessListComparator();
 
     public MeiosisOperators(DataDefinitions dataDefinitions, double mutationRate) {
         // mutation individual setup:
@@ -700,10 +700,7 @@ public class MeiosisOperators implements MeiosisInterface {
             for (int i = 0; i < auxList1.size(); i++) {
                 if (auxList1.get(i).getValue0() >= minimumSecondPID) { // here i = index of minimumSecondPID
                     crossoverSpots.add(firstTripletIndexSplitPair.getSecond());
-                    System.out.println(firstTripletIndexSplitPair.getSecond());
-                    System.out.println(i);
                     crossoverSpots.add(i + rand.nextInt(auxList1.size() - i));
-                    System.out.println(crossoverSpots.get(0));
                     break;
                 }
                 else if (i == auxList1.size() - 1) { // Does not exist a valid promoter site that far away
@@ -719,7 +716,7 @@ public class MeiosisOperators implements MeiosisInterface {
         List<Triplet<Integer, Boolean, Integer>> newAuxList1 = auxList1;
         List<Triplet<Integer, Boolean, Integer>> newAuxList2 = auxList2;
 
-        System.out.println(crossoverSpots);
+
         for (int swappingIndex : crossoverSpots) {
             Triplet<Integer, Boolean, Integer> swappingTriplet = auxList1.get(swappingIndex);
             Triplet<Integer, Boolean, Integer> swappedTriplet = findTripletClosestPID(newAuxList2, swappingTriplet.getValue0());
@@ -784,10 +781,7 @@ public class MeiosisOperators implements MeiosisInterface {
 
 
     private List<Triplet<Integer, Boolean, Integer>> sortAuxiliaryList(List<Triplet<Integer, Boolean, Integer>> auxList) {
-        System.out.println("asjdfnafnafnaf");
-        System.out.println(auxList);
         auxList.sort(auxiliaryListComparator); // uses timsort, as list is usually going to be almost sorted and will also be small, use insertion sort if want a speedup here
-        System.out.println(auxList);
         return auxList;
     }
 
@@ -885,10 +879,10 @@ public class MeiosisOperators implements MeiosisInterface {
         int i = 0;
         for (Pair<Float, EvolutionaryGenome> fitnessGenomePair : fitnessList) {
             if (i < fitnessListSize/2) {
-                selectionList.add(i, new Pair<>(2, fitnessGenomePair.getSecond()));
+                selectionList.add(i, new Pair<>(4, fitnessGenomePair.getSecond()));
             }
             else {
-                selectionList.add(i, new Pair<>(1, fitnessGenomePair.getSecond()));
+                selectionList.add(i, new Pair<>(2, fitnessGenomePair.getSecond()));
             }
             i++;
         }
@@ -897,7 +891,7 @@ public class MeiosisOperators implements MeiosisInterface {
         List<EvolutionaryGenome> nextGenerationList = new ArrayList<>();
 
         // elitism
-        for (int j = 0; j < numElite; i++) {
+        for (int j = 0; j < numElite; j++) {
             nextGenerationList.add(copyEvolutionaryGenome(selectionList.get(j).getSecond()));
         }
 
@@ -905,14 +899,20 @@ public class MeiosisOperators implements MeiosisInterface {
         int selectionListLength = selectionList.size();
         while (selectionListLength > 0) {
             int numNewGenomes = selectionList.get(0).getFirst();
-            for (int j = 0; i < numNewGenomes; j++) {
+            for (int j = 0; j < numNewGenomes; j++) {
+                if (selectionListLength == 1) {
+                    int randomIndex = 0;
+                    EvolutionaryGenome randomGenome = copyEvolutionaryGenome(selectionList.get(randomIndex).getSecond());
+                    nextGenerationList.add(fertilisation(copyEvolutionaryGenome(selectionList.get(0).getSecond()), randomGenome));
+                    break;
+                }
                 int randomIndex = 1 + rand.nextInt(selectionListLength - 1);
                 int previousReproductionCount = selectionList.get(randomIndex).getFirst();
                 EvolutionaryGenome randomGenome = copyEvolutionaryGenome(selectionList.get(randomIndex).getSecond());
                 nextGenerationList.add(fertilisation(copyEvolutionaryGenome(selectionList.get(0).getSecond()), randomGenome));
                 selectionList.remove(randomIndex);
-                if (previousReproductionCount == 2) { // still reproduces one more time
-                    selectionList.add(randomIndex, new Pair<>(1, randomGenome));
+                if (previousReproductionCount >= 2) { // still reproduces one more time
+                    selectionList.add(randomIndex, new Pair<>(previousReproductionCount-1, randomGenome));
                 }
                 else {
                     selectionListLength--;
