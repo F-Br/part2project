@@ -20,7 +20,7 @@ public class FragletVat {
     LinkedList<Fraglet> matchFragletList = new LinkedList<>();
     HashMap<InstructionTag, Integer> headInstructionPresentMap = new HashMap<>(); // TODO: consider, might have been better using a list pointing to the actual fraglets.
     HashMap<BitSet, Integer> dataHeadInstuctionPresentMap = new HashMap<>(); // TODO: STILL... need to decide details of this, is it going to be a bitset or an integer?
-    PriorityQueue<FragletReleasePair> delayedFragletQueue = new PriorityQueue<>();
+    PriorityQueue<FragletReleasePair> delayedFragletQueue = new PriorityQueue<>(new FragletReleasePairComparator());
 
     private FragletParser fragletParser;
 
@@ -43,7 +43,7 @@ public class FragletVat {
             return;
         }
 
-        fraglet.consumeNOPHeadInstructions(); // TODO: maybe remove? See note in the method in fraglet. should almost definitely rework/delete
+        //fraglet.consumeNOPHeadInstructions(); // TODO: maybe remove? See note in the method in fraglet. should almost definitely rework/delete
 
         if (fraglet.peekHeadInstruction().getInstructionTag().isMatchInstruction()) {
             matchFragletList.add(fraglet);
