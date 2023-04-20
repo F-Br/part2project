@@ -54,14 +54,14 @@ public class SideController {
 
         switch (side) {
             case SENDER:
-                challengeQuestion = new ChallengeQuestion();
+                this.challengeQuestion = new ChallengeQuestion();
                 challengeQuestion.createNewChallengeQuestion();
-                fragletParser = new FragletParser(challengeQuestion, genome, currentEndpoint);
+                this.fragletParser = new FragletParser(challengeQuestion, genome, currentEndpoint);
                 break;
             case RECEIVER:
-                challengeAnswer = new ChallengeAnswer();
+                this.challengeAnswer = new ChallengeAnswer();
                 challengeAnswer.resetChallengeAnswer();
-                fragletParser = new FragletParser(challengeAnswer, genome, currentEndpoint);
+                this.fragletParser = new FragletParser(challengeAnswer, genome, currentEndpoint);
                 break;
             default:
                 throw new IllegalArgumentException("side enum not recognised as SENDER or RECEIVER, was given as: " + side.name());
@@ -73,9 +73,9 @@ public class SideController {
         // determine promoter to promote
 
         // check starting chromosomes are both valid PIDs
-        if ((genome.findClosestPID(senderChromosomeStartingChromPID) != senderChromosomeStartingChromPID) || (genome.findClosestPID(receiverChromosomeStartingChromPID) != receiverChromosomeStartingChromPID)) {
-            throw new IllegalStateException("There must exist chromosomes with chromPID of " + senderChromosomeStartingChromPID + " and " + receiverChromosomeStartingChromPID);
-        }
+        //if ((genome.findClosestPID(senderChromosomeStartingChromPID) != senderChromosomeStartingChromPID) || (genome.findClosestPID(receiverChromosomeStartingChromPID) != receiverChromosomeStartingChromPID)) {
+        //    throw new IllegalStateException("There must exist chromosomes with chromPID of " + senderChromosomeStartingChromPID + " and " + receiverChromosomeStartingChromPID);
+        //}
 
         // check starting chromosomes are both valid chromosome PIDs
         assert (genome.getSortedChromPIDList().contains(senderChromosomeStartingChromPID));
