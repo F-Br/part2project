@@ -36,8 +36,8 @@ public class StartingGenomeGenerator {
         List<Codon> chromosome1B = new LinkedList<>();
 
         // sender starter
-        chromosome1A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
-        chromosome1B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
+        chromosome1A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
+        chromosome1B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
 
         chromosome1A.add(new Codon(CodonType.INSTRUCTION, new Instruction(InstructionTag.PERMANENT_REPRESS)));
         chromosome1A.add(new Codon(CodonType.INSTRUCTION, new DataInstruction(BitSet.valueOf(new long[] {chromStartingValue + chromosomeLength * 0}))));
@@ -95,8 +95,8 @@ public class StartingGenomeGenerator {
 
 
         // extract
-        chromosome2A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
-        chromosome2B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
+        chromosome2A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
+        chromosome2B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
 
         chromosome2A.add(new Codon(CodonType.INSTRUCTION, new Instruction(InstructionTag.EXTRACT)));
         chromosome2A.add(new Codon(CodonType.INSTRUCTION, new DataInstruction(BitSet.valueOf(new long[] {dataTagStartingValue}))));
@@ -143,8 +143,8 @@ public class StartingGenomeGenerator {
 
 
         // empty
-        chromosome3A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
-        chromosome3B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
+        chromosome3A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
+        chromosome3B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
 
         chromosome3A.add(new Codon(CodonType.INSTRUCTION, new Instruction(InstructionTag.NOP)));
         chromosome3A.add(new Codon(CodonType.INSTRUCTION, new Instruction(InstructionTag.NOP)));
@@ -187,8 +187,8 @@ public class StartingGenomeGenerator {
 
 
         // reciever starter
-        chromosome4A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
-        chromosome4B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
+        chromosome4A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
+        chromosome4B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
 
         chromosome4A.add(new Codon(CodonType.INSTRUCTION, new Instruction(InstructionTag.PERMANENT_REPRESS)));
         chromosome4A.add(new Codon(CodonType.INSTRUCTION, new DataInstruction(BitSet.valueOf(new long[] {chromStartingValue + chromosomeLength * 3}))));
@@ -247,8 +247,8 @@ public class StartingGenomeGenerator {
 
 
         // recieve
-        chromosome5A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
-        chromosome5B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
+        chromosome5A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
+        chromosome5B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
 
         chromosome5A.add(new Codon(CodonType.INSTRUCTION, new Instruction(InstructionTag.MATCH)));
         chromosome5A.add(new Codon(CodonType.INSTRUCTION, new Instruction(InstructionTag.NOP)));
@@ -290,8 +290,8 @@ public class StartingGenomeGenerator {
         List<Codon> chromosome6B = new LinkedList<>();
 
         // empty
-        chromosome6A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
-        chromosome6B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue));
+        chromosome6A.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
+        chromosome6B.add(new Codon(CodonType.BLOCKING_PROMOTER, currentStartingValue + 1));
 
         chromosome6A.add(new Codon(CodonType.INSTRUCTION, new Instruction(InstructionTag.NOP)));
         chromosome6A.add(new Codon(CodonType.INSTRUCTION, new Instruction(InstructionTag.NOP)));

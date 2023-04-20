@@ -54,7 +54,11 @@ public class DataDefinitions {
         if (index >= numberChromosomePairs) {
             throw new IllegalArgumentException("index (" + index + ") must be less than number of chromosomes (" + numberChromosomePairs +")");
         }
-        return getChromosomeDataStartingValue() + (index * internalChromosomeDataGroupSize);
+        return getChromosomeDataStartingValue() + (index * (internalChromosomeDataGroupSize + 1)) + 1; // e.g. if CID is 200, it starts at 201 and goes till 299
+    }
+
+    public int getCIDForChromosomeIndex(int index) {
+        return getChromosomeDataStartingValueForIndex(index) - 1;
     }
 
     public int getCounterDataGroupSize() {
@@ -68,6 +72,8 @@ public class DataDefinitions {
     public int getInternalChromosomeDataGroupSize() {
         return internalChromosomeDataGroupSize;
     }
+
+    public int getInternalChromosomeLengthIncludingCID() { return internalChromosomeDataGroupSize + 1;}
 
     public int getNumberChromosomePairs() {
         return numberChromosomePairs;

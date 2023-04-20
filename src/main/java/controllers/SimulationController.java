@@ -52,7 +52,7 @@ public class SimulationController {
         int numChromosomes = evolutionaryGenome.getLength();
         ArrayList<Chromosome> chromosomeList = new ArrayList<>(numChromosomes * 2);
         for (int i = 0; i < numChromosomes; i++) {
-            int chromosomeStartingIndex = dataDefinitions.getChromosomeDataStartingValueForIndex(i);
+            int chromosomeStartingIndex = dataDefinitions.getCIDForChromosomeIndex(i);
             Pair<List<Codon>, List<Codon>> codonListChromosomePair = evolutionaryGenome.getChromosomePair(i);
 
             chromosomeList.add(2 * i, new Chromosome(chromosomeStartingIndex, new ArrayList<>(codonListChromosomePair.getFirst())));
