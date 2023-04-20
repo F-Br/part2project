@@ -230,8 +230,8 @@ public class MeiosisOperators implements MeiosisInterface {
     private int calculateModifiedPromoterPID(int currentCodonPID, int chromosomeIndex) {
         if (rand.nextInt(2) == 0) { // +
             currentCodonPID -= (rand.nextInt(DATA_CHROMOSOME_GROUP_MUTATION_MAGNITUDE) + 1);
-            if (currentCodonPID < dataDefinitions.getChromosomeDataStartingValueForIndex(chromosomeIndex)) { // check hasn't fallen out of chromosome
-                currentCodonPID = dataDefinitions.getChromosomeDataStartingValueForIndex(chromosomeIndex);
+            if (currentCodonPID <= dataDefinitions.getChromosomeDataStartingValueForIndex(chromosomeIndex)) { // check hasn't fallen out of chromosome
+                currentCodonPID = dataDefinitions.getChromosomeDataStartingValueForIndex(chromosomeIndex) + 1;
             }
         } else { // -
             currentCodonPID += (rand.nextInt(DATA_CHROMOSOME_GROUP_MUTATION_MAGNITUDE) + 1);
@@ -717,8 +717,14 @@ public class MeiosisOperators implements MeiosisInterface {
         List<Triplet<Integer, Boolean, Integer>> newAuxList2 = auxList2;
 
 
+
+        int numberOfSwaps = 0;
         for (int swappingIndex : crossoverSpots) {
+            numberOfSwaps++;
             Triplet<Integer, Boolean, Integer> swappingTriplet = auxList1.get(swappingIndex);
+            if (numberOfSwaps == 2) { // need swapping triplet to be identical, so if swapped before, its swapped boolean should be false
+                swappingTriplet = swappingTriplet.setAt1(!swappingTriplet.getValue1());
+            }
             Triplet<Integer, Boolean, Integer> swappedTriplet = findTripletClosestPID(newAuxList2, swappingTriplet.getValue0());
 
             List<Triplet<Integer, Boolean, Integer>> tempAuxList1 = new LinkedList<>();
