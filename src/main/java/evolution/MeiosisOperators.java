@@ -7,10 +7,8 @@ import org.apache.commons.math3.distribution.EnumeratedDistribution;
 
 import org.apache.commons.math3.util.Pair;
 import org.javatuples.Triplet;
-import sideinfrastructure.genome.Chromosome;
 import sideinfrastructure.genome.Codon;
 import sideinfrastructure.genome.CodonType;
-import sideinfrastructure.genome.Genome;
 
 import java.util.*;
 
@@ -37,7 +35,7 @@ public class MeiosisOperators implements MeiosisInterface {
 
     private EnumeratedDistribution codonDefaultDistribution;
     private AuxiliaryListComparator auxiliaryListComparator;
-    private FitnessListComparator fitnessListComparator = new FitnessListComparator();
+    private FitnessListComparatorDescending fitnessListComparator = new FitnessListComparatorDescending();
 
     public MeiosisOperators(DataDefinitions dataDefinitions, double mutationRate) {
         // mutation individual setup:
@@ -872,23 +870,24 @@ public class MeiosisOperators implements MeiosisInterface {
         return new EvolutionaryGenome(newGenome);
     }
 
-    public List<EvolutionaryGenome> fullSelectionOfNextGeneration(List<Pair<Float, EvolutionaryGenome>> fitnessList, int numElite) {
+    public List<EvolutionaryGenome> fullSelectionOfNextGeneration(List<Triplet<Float, EvolutionaryGenome, Long>> fitnessList, int numElite) {
         // remove poor performing genomes
         fitnessList.sort(fitnessListComparator);
         int fitnessListSize = fitnessList.size();
         int genomesToRemove = (fitnessListSize - numElite)/3 + numElite;
         fitnessList = fitnessList.subList(0, fitnessListSize - genomesToRemove);
         fitnessListSize = fitnessList.size();
+        System.out.println(fitnessList.get(0).getValue0());
 
         // create selectionList
         List<Pair<Integer, EvolutionaryGenome>> selectionList = new ArrayList<>();
         int i = 0;
-        for (Pair<Float, EvolutionaryGenome> fitnessGenomePair : fitnessList) {
+        for (Triplet<Float, EvolutionaryGenome, Long> fitnessGenomeTriplet : fitnessList) {
             if (i < fitnessListSize/2) {
-                selectionList.add(i, new Pair<>(4, fitnessGenomePair.getSecond()));
+                selectionList.add(i, new Pair<>(4, fitnessGenomeTriplet.getValue1()));
             }
             else {
-                selectionList.add(i, new Pair<>(2, fitnessGenomePair.getSecond()));
+                selectionList.add(i, new Pair<>(2, fitnessGenomeTriplet.getValue1()));
             }
             i++;
         }
@@ -930,9 +929,5 @@ public class MeiosisOperators implements MeiosisInterface {
 
         return nextGenerationList;
     }
-
-
-
-    // TODO: rename selection function to fullSelectionOfNextGeneration
 
 }

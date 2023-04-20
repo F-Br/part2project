@@ -4,6 +4,7 @@ import evolution.EvolutionaryGenome;
 import evolution.MeiosisInterface;
 import evolution.MeiosisOperators;
 import org.apache.commons.math3.util.Pair;
+import org.javatuples.Triplet;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -15,7 +16,7 @@ public class GenerationController {
     private MeiosisOperators meiosisOperators;
     private SimulationController simulationController;
     private int numElite;
-    private List<Pair<Float, EvolutionaryGenome>> fitnessPairGeneration;
+    private List<Triplet<Float, EvolutionaryGenome, Long>> fitnessTripletGeneration;
 
 
     public GenerationController(List<EvolutionaryGenome> startingGeneration, MeiosisOperators meiosisOperators, SimulationController simulationController, int numElite) {
@@ -27,26 +28,25 @@ public class GenerationController {
 
     public void simulateGeneration() {
         int generationSize = currentGeneration.size();
-        fitnessPairGeneration = new ArrayList<>(generationSize);
+        fitnessTripletGeneration = new ArrayList<>(generationSize);
         for (int i = 0; i < generationSize; i++) {
-            System.out.println("Genome: " + i);
             EvolutionaryGenome currentGenome = currentGeneration.get(i);
-            Pair<Float, EvolutionaryGenome> fitnessGenomePair = simulateGenome(currentGenome);
-            fitnessPairGeneration.add(i, fitnessGenomePair);
+            Triplet<Float, EvolutionaryGenome, Long> fitnessGenomeTimeTriplet = simulateGenome(currentGenome);
+            fitnessTripletGeneration.add(i, fitnessGenomeTimeTriplet);
         }
     }
 
     public void createNextGeneration() {
-        currentGeneration = meiosisOperators.fullSelectionOfNextGeneration(fitnessPairGeneration, numElite);
+        currentGeneration = meiosisOperators.fullSelectionOfNextGeneration(fitnessTripletGeneration, numElite);
     }
 
-    private Pair<Float, EvolutionaryGenome> simulateGenome(EvolutionaryGenome evolutionaryGenome) {
+    private Triplet<Float, EvolutionaryGenome, Long> simulateGenome(EvolutionaryGenome evolutionaryGenome) {
         Pair<Float, Long> fitnessAndTimePair = simulationController.simulateGenome(evolutionaryGenome);
         float fitnessScore = fitnessAndTimePair.getFirst();
 
         // TODO: add timer metrics here maybe
 
-        return new Pair<>(fitnessScore, evolutionaryGenome);
+        return new Triplet<>(fitnessScore, evolutionaryGenome, fitnessAndTimePair.getSecond());
     }
 
 }
