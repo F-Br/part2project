@@ -169,7 +169,7 @@ public class FragletParser {
 
 
                 case DELAY: {
-                    if (fraglet.size() < 2) {
+                    if (fraglet.size() < 3) {
                         break fraglet_parsing_loop;
                     }
                     if (!(fraglet.get(1) instanceof DataInstruction)) {
@@ -179,7 +179,8 @@ public class FragletParser {
                     fraglet.pollHeadInstruction();
                     long delay = ((DataInstruction) fraglet.pollHeadInstruction()).getLongData();
                     fragletVat.addToDelayFragletQueue(fraglet, delay);
-                    break fraglet_parsing_loop;
+                    //break fraglet_parsing_loop;
+                    return;
                 }
 
                 case IF_MATCH: { // TODO: still a lot to do for this one
@@ -224,13 +225,15 @@ public class FragletParser {
                     long longPID = ((DataInstruction) fraglet.pollHeadInstruction()).getLongData();
                     int validPID = genome.findClosestPID((int) longPID);
                     Instruction param;
-                    try {
+
+                    if (fraglet.size() > 0) {
                         param = fraglet.get(0);
-                    } catch (IndexOutOfBoundsException e) { // check instruction present
-                        // promote
+                    }
+                    else {
                         genome.addGeneExpressionDetail(new GeneExpressionDetails(PROMOTER_LIFE_TIME + StepClock.getCurrentStepCount(), GeneExpressionType.PROMOTER, validPID));
                         break;
                     }
+
                     if (!(param instanceof DataInstruction)) { // check if not data instruction
                         genome.addGeneExpressionDetail(new GeneExpressionDetails(PROMOTER_LIFE_TIME + StepClock.getCurrentStepCount(), GeneExpressionType.PROMOTER, validPID));
                         break;
@@ -291,12 +294,18 @@ public class FragletParser {
 
                     fraglet.pollHeadInstruction();
                     currentEndpoint.sendFraglet(fraglet); // TODO: need to fix packet problems
-                    challengeQuestion.checkIfSentAfterExtraction();
+                    if (side == SideIdentifier.SENDER) {
+                        challengeQuestion.checkIfSentAfterExtraction();
+                    }
                     return; // TODO: check this is correct, next line should be deleted i think
                     // break fraglet_parsing_loop; // TODO: may need to check that logic which follows after loop doesn't affect this fraglet
                 }
 
                 case SPLIT: {
+                    if (fraglet.size() < 2) { // needs to have something to search through
+                        break fraglet_parsing_loop;
+                    }
+
                     fraglet.pollHeadInstruction();
                     LinkedList<Instruction> seq1 = new LinkedList<>();
 
@@ -318,7 +327,7 @@ public class FragletParser {
                             break switch_statement; // TODO: want to break out of switch statement but how?
                         } else {
                             seq1.addLast(fraglet.pollHeadInstruction());
-                            fraglet.remove(0);
+                            //fraglet.remove(0);
                         }
 
                         if (fraglet.isEmpty()) { // no star
