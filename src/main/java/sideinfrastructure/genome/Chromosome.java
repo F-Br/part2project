@@ -121,7 +121,7 @@ public class Chromosome {
         int currentCumulativeScore = 0;
 
         for (int PID : sortedPIDList) {
-            int PIDScore = PIDtoPIDExpressionMap.get(PID).getIndividualPromoteScore();
+            int PIDScore = PIDtoPIDExpressionMap.get(PID).getSumOfAllPIDInChromosomePromoteScore();
 
             if (PIDScore == 0) {
                 continue;
