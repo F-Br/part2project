@@ -125,7 +125,7 @@ public class FragletVat {
             if (instructionToMatch instanceof DataInstruction) {
                 for (Fraglet freeFraglet : fragletList) {
                     if (freeFraglet.peekHeadInstruction() instanceof DataInstruction) {
-                        if (((DataInstruction) freeFraglet.peekHeadInstruction()).getData() == ((DataInstruction) instructionToMatch).getData()) {
+                        if (((DataInstruction) freeFraglet.peekHeadInstruction()).getLongData() == ((DataInstruction) instructionToMatch).getLongData()) {
                             removeSpecificFraglet(matchFraglet);
                             removeSpecificFraglet(freeFraglet);
                             return freeFraglet;
@@ -154,7 +154,7 @@ public class FragletVat {
             if (instructionToMatch instanceof DataInstruction) {
                 for (Fraglet freeFraglet : fragletList) {
                     if (freeFraglet.peekHeadInstruction() instanceof DataInstruction) {
-                        if (((DataInstruction) freeFraglet.peekHeadInstruction()).getData() == ((DataInstruction) instructionToMatch).getData()) {
+                        if (((DataInstruction) freeFraglet.peekHeadInstruction()).getLongData() == ((DataInstruction) instructionToMatch).getLongData()) {
                             removeSpecificFraglet(freeFraglet);
                             return freeFraglet;
                         }
