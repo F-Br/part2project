@@ -36,7 +36,7 @@ public class Pipeline {
             throw new IllegalStateException("releaseStep has not been set. Ensure operationBlockList includes an " +
                     "operation to set releaseState to a value");
         }
-        System.out.println("packet added to queue");
+        //System.out.println("packet added to queue");
         pipelineQueue.add(packetPair);
     }
 

@@ -92,7 +92,6 @@ public class SimulationController {
 
         // simulation
         for (int i = 0; i < maxNumberOfSimulationSteps; i++) {
-            //System.out.println(StepClock.getCurrentStepCount());
             controller.simulateChannelStep();
             senderController.simulateSideCheck();
             receiverController.simulateSideCheck();
@@ -101,7 +100,7 @@ public class SimulationController {
         //System.out.println("Finished Simulation");
         long endTime = System.currentTimeMillis();
         long executionTime = endTime - startTime;
-        System.out.println("Number of milliseconds to complete simulation: " + (endTime - startTime));
+        //System.out.println("Number of milliseconds to complete simulation: " + (endTime - startTime));
 
         // evaluate performance
         float fitnessScore = fitnessFunction.getFitness(senderController.getChallengeQuestion(), receiverController.getChallengeAnswer());
