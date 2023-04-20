@@ -19,7 +19,7 @@ public class Genome {
     // sorted list of promoter ID
     // map PID -> CID
     // map CID -> (#prom, #repr)
-    HashMap<Integer, HashSet<Chromosome>> chromPIDToChromosomeMap = new HashMap<>(); // TODO: data structure of this should probably be hashset
+    HashMap<Integer, HashSet<Chromosome>> chromPIDToChromosomeMap = new HashMap<>();
     ArrayList<Integer> sortedPIDList = new ArrayList<>(); // TODO: should this be an array set?
     ArrayList<Integer> sortedChromPIDList = new ArrayList<>(); // TODO: should this be an array set?
     HashMap<Integer, HashSet<Integer>> PIDToChromPIDLocationMap = new HashMap<>();
@@ -143,7 +143,16 @@ public class Genome {
 
                 case PROMOTER:
                     int validPID = oldGeneExpressionDetails.getPID();
-                    HashSet<Integer> chromPIDs = PIDToChromPIDLocationMap.get(validPID);
+
+                    HashSet<Integer> chromPIDs;
+                    if (sortedChromPIDList.contains(validPID)) { // if validPID is a chromPID
+                        chromPIDs = new HashSet<>();
+                        chromPIDs.add(validPID);
+                    }
+                    else {
+                        chromPIDs = PIDToChromPIDLocationMap.get(validPID);
+                    }
+
                     for (int chromPID : chromPIDs) {
                         if (chromPIDToRepressorCountMap.get(chromPID) > 0) { // ignore any chromPIDs which are repressed
                             continue;
@@ -198,7 +207,7 @@ public class Genome {
         // check if it is a chromosome, and if so replace with its delegated promotion site
         if (sortedChromPIDList.contains(validPID)) {
             for (Chromosome chromosome : chromPIDToChromosomeMap.get(validPID)) { // TODO: if just did the first chromosome in this set then would only create 2 promotions and not potentially 4. Might want to change this
-                parseGenome(chromosome.getDelegatePID());
+                parseGenome(chromosome.getDelegatePID(), VARValue);
             }
             return;
         }
@@ -411,7 +420,8 @@ public class Genome {
 
     public void removeRepressor(int validPID) {
         if (sortedChromPIDList.contains(validPID)) {
-            chromPIDToRepressorCountMap.put(validPID, chromPIDToRepressorCountMap.get((validPID) - 1));
+            chromPIDToRepressorCountMap.put(validPID, chromPIDToRepressorCountMap.get(validPID) - 1);
+            return;
         }
 
         HashSet<Integer> chromPIDs = PIDToChromPIDLocationMap.get(validPID);
