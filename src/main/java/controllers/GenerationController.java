@@ -16,6 +16,11 @@ public class GenerationController {
     private MeiosisOperators meiosisOperators;
     private SimulationController simulationController;
     private int numElite;
+
+    public List<Triplet<Float, EvolutionaryGenome, Long>> getFitnessTripletGeneration() {
+        return fitnessTripletGeneration;
+    }
+
     private List<Triplet<Float, EvolutionaryGenome, Long>> fitnessTripletGeneration;
 
 
