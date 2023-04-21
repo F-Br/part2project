@@ -28,6 +28,9 @@ public class Chromosome {
 
     private void initialisePIDtoIndexMapAndSortedPIDList() {
         int index = 0;
+        if (codonList.size() == 0) { // in event of empty chromosome, add just one promoter so it can simulate, however it will probably die this generation
+            codonList.add(0, new Codon(CodonType.BLOCKING_PROMOTER, chromPID + 1));
+        }
         for (Codon codon : codonList) {
             CodonType codonType = codon.getCodonType();
             if ((codonType == CodonType.BLOCKING_PROMOTER) || (codonType == CodonType.CONTINUING_PROMOTER)) {
@@ -112,7 +115,9 @@ public class Chromosome {
             return totalScore;
         }
         PromoteRepressPair promoteRepressPair = PIDtoPIDExpressionMap.get(validPID);
-        totalScore += promoteRepressPair.removeRepressor();
+        //totalScore += promoteRepressPair.removeRepressor();
+        promoteRepressPair.removeRepressor();
+        totalScore += promoteRepressPair.getSumOfAllPIDInChromosomePromoteScore();
         return totalScore;
     }
 
