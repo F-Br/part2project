@@ -20,6 +20,11 @@ public class Genome {
     // map PID -> CID
     // map CID -> (#prom, #repr)
     HashMap<Integer, HashSet<Chromosome>> chromPIDToChromosomeMap = new HashMap<>();
+
+    public ArrayList<Integer> getSortedPIDList() {
+        return sortedPIDList;
+    }
+
     ArrayList<Integer> sortedPIDList = new ArrayList<>(); // TODO: should this be an array set?
     ArrayList<Integer> sortedChromPIDList = new ArrayList<>(); // TODO: should this be an array set?
     HashMap<Integer, HashSet<Integer>> PIDToChromPIDLocationMap = new HashMap<>();
