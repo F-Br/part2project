@@ -103,7 +103,7 @@ public class SimulationController {
         //System.out.println("Number of milliseconds to complete simulation: " + (endTime - startTime));
 
         // evaluate performance
-        float fitnessScore = fitnessFunction.getFitness(senderController.getChallengeQuestion(), receiverController.getChallengeAnswer());
+        float fitnessScore = fitnessFunction.getFitness(senderController.getChallengeQuestion(), receiverController.getChallengeAnswer(), senderGenome);
 
         return new Pair<>(fitnessScore, executionTime);
     }
