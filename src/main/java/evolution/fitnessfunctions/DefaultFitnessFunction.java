@@ -2,6 +2,7 @@ package evolution.fitnessfunctions;
 
 import sideinfrastructure.ChallengeAnswer;
 import sideinfrastructure.ChallengeQuestion;
+import sideinfrastructure.genome.Genome;
 
 import java.util.BitSet;
 
@@ -30,7 +31,7 @@ public class DefaultFitnessFunction extends FitnessFunction {
     }
 
     @Override
-    public float getFitness(ChallengeQuestion challengeQuestion, ChallengeAnswer challengeAnswer) {
+    public float getFitness(ChallengeQuestion challengeQuestion, ChallengeAnswer challengeAnswer, Genome senderGenome) {
         float score = 0;
         if (challengeQuestion.isExtractedAtleastOnce()) {
             score++;
@@ -43,5 +44,10 @@ public class DefaultFitnessFunction extends FitnessFunction {
             }
         }
         return score;
+    }
+
+    @Override
+    public float addNoiseToFitness(float currentFitness, float maxNoiseValue) {
+        return currentFitness;
     }
 }
